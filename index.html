@@ -141,10 +141,10 @@ function tarifaKM(){
 let base=580;
 let pesoVal=parseFloat(document.getElementById('peso').value)||0;
 let extra=0;
-if(pesoVal>50 && pesoVal<=200) extra=620;
-else if(pesoVal>200 && pesoVal<=500) extra=920;
-else if(pesoVal>500 && pesoVal<=1000) extra=1320;
-else if(pesoVal>1000) extra=1620;
+if(pesoVal>50 && pesoVal<=200) extra=2920;
+else if(pesoVal>200 && pesoVal<=500) extra=3420;
+else if(pesoVal>500 && pesoVal<=1000) extra=4020;
+else if(pesoVal>1000) extra=5020;
 return base+extra;
 }
 

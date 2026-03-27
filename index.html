@@ -146,17 +146,21 @@ lista.innerHTML=direcciones.map((d,i)=>`<div class='item'>${i+1}. ${d}</div>`).j
 
 function tarifaKM(){
 let base=580;
-let tipo=vehiculo.value;
-let peso=parseFloat(peso.value)||0;
+
+let tipo = document.getElementById('vehiculo').value;
+let pesoInput = document.getElementById('peso');
+let peso = parseFloat(pesoInput.value) || 0;
+
 let extra=0;
 
 if(tipo!=='auto'){
-if(peso>50 && peso<=200) extra=620;
-else if(peso>200 && peso<=500) extra=920;
-else if(peso>500 && peso<=1000) extra=1220;
-else if(peso>1000) extra=1520;
+  if(peso>50 && peso<=200) extra=620;
+  else if(peso>200 && peso<=500) extra=920;
+  else if(peso>500 && peso<=1000) extra=1220;
+  else if(peso>1000) extra=1420;
 }
-return base+extra;
+
+return base + extra;
 }
 
 async function calcular(){

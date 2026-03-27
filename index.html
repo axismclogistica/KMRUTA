@@ -8,58 +8,71 @@
 <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY"></script>
 
 <style>
-body{font-family:Arial;background:#0a0a0a;color:white;margin:0;padding:0}
+body{font-family:Arial;background:linear-gradient(135deg,#0a0a0a,#111);color:white;margin:0}
 .container{max-width:1100px;margin:auto;padding:20px}
-.header{display:flex;align-items:center;gap:15px}
-.header img{width:70px}
-h1{color:#00c2a8;margin:0}
+.header{display:flex;align-items:center;gap:15px;margin-bottom:20px}
+.header img{width:60px}
+h1{color:#00c2a8}
 
-.card{background:#111;padding:15px;border-radius:12px;margin-top:15px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-input{padding:10px;border-radius:8px;border:none;width:100%}
-button{padding:12px;border:none;border-radius:10px;font-weight:bold;cursor:pointer}
-.btn{background:linear-gradient(45deg,#00c2a8,#f59e0b);color:black}
+.card{background:#141414;padding:20px;border-radius:15px;margin-top:15px;box-shadow:0 10px 25px rgba(0,0,0,.5)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
+
+label{font-size:12px;color:#aaa;margin-bottom:3px;display:block}
+select,input{padding:10px;border-radius:8px;border:none;width:100%;background:#1f1f1f;color:white}
+
+button{padding:12px;border:none;border-radius:10px;font-weight:bold;cursor:pointer;margin-top:10px}
+.btn{background:linear-gradient(45deg,#00c2a8,#00e0c2);color:black}
 .btn2{background:#222;color:white}
 
-.lista{margin-top:15px}
-.item{background:#1a1a1a;padding:10px;border-radius:8px;margin-bottom:5px}
+.lista{margin-top:10px}
+.item{background:#1f1f1f;padding:10px;border-radius:8px;margin-bottom:5px;font-size:13px}
 
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;display:none;background:rgba(0,0,0,.7);justify-content:center;align-items:center}
-.modal-content{background:#111;padding:20px;border-radius:12px;max-width:600px;width:90%}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;display:none;background:rgba(0,0,0,.8);justify-content:center;align-items:center}
+.modal-content{background:#111;padding:25px;border-radius:15px;max-width:600px;width:90%}
 </style>
 </head>
 <body>
 
 <div class="container">
-
 <div class="header">
 <img src="https://github.com/axismclogistica/axis-mc-logistica/blob/main/Logo%20Axismc.png?raw=true">
 <h1>Axis MC Logística</h1>
 </div>
 
 <div class="card">
-<h3>Inicio de Ruta</h3>
-<input id="inicio" placeholder="Ej: Heredia Centro, Costa Rica">
+<label>Inicio de Ruta</label>
+<input id="inicio" placeholder="Ej: Heredia Centro">
 </div>
 
 <div class="card">
 <h3>Agregar destino</h3>
 <div class="grid">
-<input id="provincia" placeholder="Provincia">
-<input id="canton" placeholder="Cantón">
-<input id="distrito" placeholder="Distrito">
-<input id="senas" placeholder="Señas">
+<div>
+<label>Provincia</label>
+<select id="provincia" onchange="cargarCantones()"></select>
 </div>
-<button class="btn" onclick="agregar()">Agregar a lista</button>
+<div>
+<label>Cantón</label>
+<select id="canton" onchange="cargarDistritos()"></select>
+</div>
+<div>
+<label>Distrito</label>
+<select id="distrito"></select>
+</div>
+<div>
+<label>Señas</label>
+<input id="senas" placeholder="Referencia">
+</div>
+</div>
+<button class="btn" onclick="agregar()">Agregar</button>
 </div>
 
 <div class="card">
-<h3>Lista de rutas</h3>
+<h3>Rutas</h3>
 <div id="lista" class="lista"></div>
-<button class="btn" onclick="calcular()">Calcular Ruta</button>
+<button class="btn" onclick="calcular()">Calcular</button>
 <button class="btn2" onclick="descargar()">Descargar</button>
 </div>
-
 </div>
 
 <div class="modal" id="modal">
@@ -67,83 +80,100 @@ button{padding:12px;border:none;border-radius:10px;font-weight:bold;cursor:point
 </div>
 
 <script>
+
+const dataCR = {
+  "San José": {
+    "Central": ["Carmen","Merced","Hospital"],
+    "Escazú": ["Escazú","San Rafael"]
+  },
+  "Heredia": {
+    "Heredia": ["Heredia","Mercedes"],
+    "San Pablo": ["San Pablo"]
+  },
+  "Alajuela": {
+    "Alajuela": ["Alajuela","San José"]
+  }
+};
+
 let direcciones=[];
 let resultadoTXT="";
 
-function agregar(){
+function init(){
+let prov=document.getElementById('provincia');
+prov.innerHTML='<option>Seleccione</option>';
+Object.keys(dataCR).forEach(p=>{
+prov.innerHTML+=`<option>${p}</option>`;
+});
+}
+
+function cargarCantones(){
+let p=document.getElementById('provincia').value;
+let canton=document.getElementById('canton');
+canton.innerHTML='';
+Object.keys(dataCR[p]||{}).forEach(c=>{
+canton.innerHTML+=`<option>${c}</option>`;
+});
+cargarDistritos();
+}
+
+function cargarDistritos(){
 let p=document.getElementById('provincia').value;
 let c=document.getElementById('canton').value;
-let d=document.getElementById('distrito').value;
-let s=document.getElementById('senas').value;
+let distrito=document.getElementById('distrito');
+distrito.innerHTML='';
+(dataCR[p]?.[c]||[]).forEach(d=>{
+distrito.innerHTML+=`<option>${d}</option>`;
+});
+}
 
-if(!p||!c||!d) return alert('Completa al menos provincia, cantón y distrito');
+function agregar(){
+let p=provincia.value;
+let c=canton.value;
+let d=distrito.value;
+let s=senas.value;
 
 let dir=`${p}, ${c}, ${d}, ${s}`;
 direcciones.push(dir);
-renderLista();
+render();
 }
 
-function renderLista(){
+function render(){
 let html="";
-direcciones.forEach((d,i)=>{
-html+=`<div class="item">${i+1}. ${d}</div>`;
-});
-document.getElementById('lista').innerHTML=html;
+direcciones.forEach((d,i)=>html+=`<div class='item'>${i+1}. ${d}</div>`);
+lista.innerHTML=html;
 }
 
 async function calcular(){
 let inicio=document.getElementById('inicio').value;
-if(!inicio) return alert('Debes poner inicio de ruta');
-if(direcciones.length<1) return alert('Agrega destinos');
-
-let service=new google.maps.DistanceMatrixService();
-
 let puntos=[inicio,...direcciones];
-let total=0;
-let detalle="";
+let service=new google.maps.DistanceMatrixService();
+let total=0; let detalle="";
 
 for(let i=0;i<puntos.length-1;i++){
-let data=await new Promise((res,rej)=>{
-service.getDistanceMatrix({
-origins:[puntos[i]],
-destinations:[puntos[i+1]],
-travelMode:'DRIVING'
-},(r,s)=>{if(s==='OK')res(r);else rej(s);});
+let res=await new Promise(r=>{
+service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travelMode:'DRIVING'},(d)=>r(d));
 });
-
-let km=data.rows[0].elements[0].distance.value/1000;
+let km=res.rows[0].elements[0].distance.value/1000;
 total+=km;
-
-detalle+=`<p>${i+1}. ${puntos[i]} → ${puntos[i+1]} = ${km.toFixed(2)} km</p>`;
+detalle+=`<p>${i+1}. ${km.toFixed(2)} km</p>`;
 }
 
 let precio=total*580;
+resultadoTXT=`Total ${total} km ₡${precio}`;
 
-resultadoTXT=`Inicio: ${inicio}\n\n${direcciones.join('\n')}\n\nTotal KM: ${total.toFixed(2)}\nCosto: ₡${precio.toFixed(0)}`;
-
-
-document.getElementById('resultado').innerHTML=`
-<h2>Resultado</h2>
-<p><b>Total KM:</b> ${total.toFixed(2)}</p>
-<p><b>Costo:</b> ₡${precio.toFixed(0)}</p>
-${detalle}
-<br>
-<button class="btn" onclick="cerrar()">Cerrar</button>
-`;
-
-document.getElementById('modal').style.display='flex';
+resultado.innerHTML=`<h2>Total: ${total.toFixed(2)} km</h2><h3>₡${precio.toFixed(0)}</h3>${detalle}<button onclick='modal.style.display="none"' class='btn'>Cerrar</button>`;
+modal.style.display='flex';
 }
-
-function cerrar(){document.getElementById('modal').style.display='none'}
 
 function descargar(){
-if(!resultadoTXT)return alert('Calcula primero');
-let blob=new Blob([resultadoTXT],{type:'text/plain'});
+let blob=new Blob([resultadoTXT]);
 let a=document.createElement('a');
 a.href=URL.createObjectURL(blob);
-a.download='ruta_axis.txt';
+a.download='ruta.txt';
 a.click();
 }
+
+init();
 </script>
 
 </body>

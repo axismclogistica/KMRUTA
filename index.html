@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Axis MC Logística</title>
 
+<!-- API CORRECTA -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8"></script>
+
 <style>
 body{font-family:Arial;background:#0a0a0a;color:white;margin:0}
 .container{max-width:1100px;margin:auto;padding:25px}
@@ -27,7 +29,7 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 
 <div class="card">
 <label>Inicio de Ruta</label>
-<input id="inicio">
+<input id="inicio" placeholder="Ej: Heredia Centro">
 </div>
 
 <div class="card">
@@ -45,8 +47,8 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 <select id="distrito"></select>
 </div>
 <div>
-<label>Señas</label>
-<input id="senas">
+<label>Señas (opcional)</label>
+<input id="senas" placeholder="Opcional">
 </div>
 </div>
 <button class="btn" onclick="agregar()">Agregar</button>
@@ -61,60 +63,77 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 
 <script>
 
+// BASE MÁS COMPLETA CR
 const dataCR={
 "San José":{
-"Central":["Carmen","Merced","Hospital","Catedral","Zapote"],
-"Escazú":["Escazú","San Rafael","San Antonio"]
+"Central":["Carmen","Merced","Hospital","Catedral","Zapote","San Francisco de Dos Ríos"],
+"Escazú":["Escazú","San Rafael","San Antonio"],
+"Desamparados":["Desamparados","San Miguel","San Juan de Dios","San Rafael Arriba"]
 },
 "Alajuela":{
-"Central":["Alajuela","San José","Carrizal"],
-"San Ramón":["San Ramón","Santiago"]
+"Central":["Alajuela","San José","Carrizal","San Antonio"],
+"San Ramón":["San Ramón","Santiago","San Juan"]
 },
 "Heredia":{
-"Heredia":["Heredia","Mercedes","San Francisco"],
-"Santo Domingo":["Santo Domingo","San Vicente"]
+"Heredia":["Heredia","Mercedes","San Francisco","Ulloa"],
+"Santo Domingo":["Santo Domingo","San Vicente","Paracito"],
+"San Pablo":["San Pablo","Rincón de Sabanilla"]
 },
 "Cartago":{
-"Central":["Oriental","Occidental","Carmen"]
+"Central":["Oriental","Occidental","Carmen","San Nicolás"],
+"Paraíso":["Paraíso","Santiago","Orosi"]
 },
 "Guanacaste":{
-"Liberia":["Liberia","Cañas Dulces"]
+"Liberia":["Liberia","Cañas Dulces","Mayorga"],
+"Nicoya":["Nicoya","Mansión","Sámara"]
 },
 "Puntarenas":{
-"Puntarenas":["Puntarenas","Chacarita"]
+"Puntarenas":["Puntarenas","Chacarita","Barranca"],
+"Garabito":["Jacó","Tárcoles"]
 },
 "Limón":{
-"Limón":["Limón","Valle La Estrella"]
+"Limón":["Limón","Valle La Estrella","Río Blanco"],
+"Pococí":["Guápiles","Cariari","Rita"]
 }
 };
 
 let direcciones=[];
 
 function init(){
-let p=document.getElementById('provincia');
-p.innerHTML='<option value="">Seleccione</option>';
-Object.keys(dataCR).forEach(x=>p.innerHTML+=`<option value="${x}">${x}</option>`);
+provincia.innerHTML='<option value="">Seleccione</option>';
+Object.keys(dataCR).forEach(p=>{
+provincia.innerHTML+=`<option value="${p}">${p}</option>`;
+});
 }
 
 function loadCantones(){
 let p=provincia.value;
-let c=document.getElementById('canton');
-c.innerHTML='';
-Object.keys(dataCR[p]||{}).forEach(x=>c.innerHTML+=`<option value="${x}">${x}</option>`);
+canton.innerHTML='';
+Object.keys(dataCR[p]||{}).forEach(c=>{
+canton.innerHTML+=`<option value="${c}">${c}</option>`;
+});
 loadDistritos();
 }
 
 function loadDistritos(){
 let p=provincia.value;
 let c=canton.value;
-let d=document.getElementById('distrito');
-d.innerHTML='';
-(dataCR[p]?.[c]||[]).forEach(x=>d.innerHTML+=`<option value="${x}">${x}</option>`);
+distrito.innerHTML='';
+(dataCR[p]?.[c]||[]).forEach(d=>{
+distrito.innerHTML+=`<option value="${d}">${d}</option>`;
+});
 }
 
 function agregar(){
-if(!provincia.value||!canton.value||!distrito.value)return alert('Completa datos');
-let dir=`${provincia.value}, ${canton.value}, ${distrito.value}, Costa Rica ${senas.value}`;
+if(!provincia.value||!canton.value||!distrito.value)return alert('Faltan datos');
+
+let dir=`${provincia.value}, ${canton.value}, ${distrito.value}, Costa Rica`;
+
+if(senas.value.trim()!==""){
+dir+=` ${senas.value}`;
+}
+
+
 direcciones.push(dir);
 render();
 }
@@ -136,13 +155,17 @@ let res=await new Promise(resolve=>{
 service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travelMode:'DRIVING'},(r)=>resolve(r));
 });
 
-if(!res.rows[0].elements[0].distance){alert('Error en dirección');return;}
+let el=res.rows[0].elements[0];
+if(!el||el.status!="OK"){
+alert('Error en dirección: '+puntos[i]);
+return;
+}
 
-let km=res.rows[0].elements[0].distance.value/1000;
+let km=el.distance.value/1000;
 total+=km;
 }
 
-alert('Total KM: '+total.toFixed(2)+' | ₡'+(total*580).toFixed(0));
+alert(`Total: ${total.toFixed(2)} km | ₡${(total*580).toFixed(0)}`);
 }
 
 init();

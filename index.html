@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Axis MC Logística - Cotizador Pro</title>
+<title>Axis MC Logística PRO</title>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8&libraries=places"></script>
 
@@ -16,9 +16,21 @@ h1{color:#00c2a8}
 label{font-size:14px;color:#aaa}
 select,input{padding:12px;border-radius:10px;border:none;width:100%;background:#1f1f1f;color:white}
 button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:10px}
-.btn{background:#00c2a8;color:black}
+.btn{background:linear-gradient(45deg,#00c2a8,#00e0c2);color:black}
 .lista{margin-top:10px}
 .item{background:#1f1f1f;padding:10px;border-radius:8px;margin-bottom:5px}
+
+/* MODAL PRO */
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;display:none;background:rgba(0,0,0,.85);justify-content:center;align-items:center}
+.modal-content{background:#111;padding:25px;border-radius:18px;width:95%;max-width:700px;box-shadow:0 0 40px rgba(0,194,168,.3)}
+.header-modal{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.header-modal h2{color:#00c2a8;margin:0}
+.close{cursor:pointer;font-size:22px}
+.resumen{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-top:15px}
+.box{background:#1a1a1a;padding:15px;border-radius:12px;text-align:center}
+.box h3{margin:5px 0;color:#00e0c2}
+.detalle{margin-top:15px;max-height:200px;overflow:auto}
+.detalle p{background:#1f1f1f;padding:10px;border-radius:8px;margin-bottom:8px;font-size:13px}
 </style>
 </head>
 <body>
@@ -28,20 +40,20 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 
 <div class="card">
 <label>Inicio de Ruta</label>
-<input id="inicio" placeholder="Ej: Heredia Centro">
+<input id="inicio">
 </div>
 
 <div class="card grid">
 <div>
-<label>Tipo de Vehículo</label>
+<label>Vehículo</label>
 <select id="vehiculo">
-<option value="auto">Auto</option>
-<option value="pickup">Pick Up / Camión</option>
+<option value="auto">🚗 Auto</option>
+<option value="pickup">🚚 PickUp / Camión</option>
 </select>
 </div>
 <div>
 <label>Peso (kg)</label>
-<input id="peso" placeholder="Solo si es carga pesada">
+<input id="peso">
 </div>
 </div>
 
@@ -56,11 +68,11 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 <select id="canton"></select>
 </div>
 <div>
-<label>Dirección (autocomplete)</label>
-<input id="direccion" placeholder="Escriba dirección completa">
+<label>Dirección</label>
+<input id="direccion">
 </div>
 </div>
-<button class="btn" onclick="agregar()">Agregar</button>
+<button class="btn" onclick="agregar()">Agregar destino</button>
 </div>
 
 <div class="card">
@@ -70,25 +82,48 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 </div>
 </div>
 
+<!-- MODAL -->
+<div class="modal" id="modal">
+<div class="modal-content">
+<div class="header-modal">
+<h2>📊 Resumen de Ruta</h2>
+<span class="close" onclick="modal.style.display='none'">✖</span>
+</div>
+
+<div class="resumen">
+<div class="box">
+<p>Distancia</p>
+<h3 id="kmTotal">0 km</h3>
+</div>
+<div class="box">
+<p>Total</p>
+<h3 id="precioTotal">₡0</h3>
+</div>
+<div class="box">
+<p>Subtotal</p>
+<h3 id="subtotal">₡0</h3>
+</div>
+<div class="box">
+<p>Combustible</p>
+<h3 id="combustible">₡0</h3>
+</div>
+</div>
+
+<div class="detalle" id="detalle"></div>
+
+</div>
+</div>
+
 <script>
 
-const cantonesCR={
-"San José":["Central","Escazú","Desamparados","Puriscal","Tarrazú","Aserrí","Mora","Goicoechea","Santa Ana","Alajuelita","Vásquez de Coronado","Acosta","Tibás","Moravia","Montes de Oca","Turrubares","Dota","Curridabat","Pérez Zeledón","León Cortés"],
-"Alajuela":["Central","San Ramón","Grecia","San Mateo","Atenas","Naranjo","Palmares","Poás","Orotina","San Carlos","Zarcero","Sarchí","Upala","Los Chiles","Guatuso","Río Cuarto"],
-"Cartago":["Central","Paraíso","La Unión","Jiménez","Turrialba","Alvarado","Oreamuno","El Guarco"],
-"Heredia":["Heredia","Barva","Santo Domingo","Santa Bárbara","San Rafael","San Isidro","Belén","Flores","San Pablo","Sarapiquí"],
-"Guanacaste":["Liberia","Nicoya","Santa Cruz","Bagaces","Carrillo","Cañas","Abangares","Tilarán","Nandayure","La Cruz","Hojancha"],
-"Puntarenas":["Puntarenas","Esparza","Buenos Aires","Montes de Oro","Osa","Quepos","Golfito","Coto Brus","Parrita","Corredores","Garabito"],
-"Limón":["Limón","Pococí","Siquirres","Talamanca","Matina","Guácimo"]
-};
-
+const cantonesCR={"San José":["Central","Escazú","Desamparados"],"Heredia":["Heredia","San Pablo"]};
 let direcciones=[];
 let resultadoTXT="";
 
 function init(){
 provincia.innerHTML='<option value="">Seleccione</option>';
 Object.keys(cantonesCR).forEach(p=>{
-provincia.innerHTML+=`<option value="${p}">${p}</option>`;
+provincia.innerHTML+=`<option>${p}</option>`;
 });
 }
 
@@ -96,13 +131,11 @@ function loadCantones(){
 let p=provincia.value;
 canton.innerHTML='';
 (cantonesCR[p]||[]).forEach(c=>{
-canton.innerHTML+=`<option value="${c}">${c}</option>`;
+canton.innerHTML+=`<option>${c}</option>`;
 });
 }
 
-const autocomplete=new google.maps.places.Autocomplete(document.getElementById("direccion"),{
-componentRestrictions:{country:"cr"}
-});
+const autocomplete=new google.maps.places.Autocomplete(document.getElementById("direccion"),{componentRestrictions:{country:"cr"}});
 
 function agregar(){
 if(!provincia.value||!canton.value||!direccion.value)return alert('Faltan datos');
@@ -116,19 +149,23 @@ lista.innerHTML=direcciones.map((d,i)=>`<div class='item'>${i+1}. ${d}</div>`).j
 }
 
 function calcularTarifa(km){
-let tipo=document.getElementById('vehiculo').value;
-let peso=parseFloat(document.getElementById('peso').value)||0;
+let tipo=vehiculo.value;
+let peso=parseFloat(pesoInput.value)||0;
 let base=580;
-
-if(tipo==='auto') return km*base;
-
 let extra=0;
-if(peso>50 && peso<=200) extra=100;
-else if(peso>200 && peso<=500) extra=200;
-else if(peso>500 && peso<=1000) extra=400;
-else if(peso>1000) extra=600;
 
-return km*(base+extra);
+if(tipo!=='auto'){
+if(peso>50 && peso<=200) extra=50;
+else if(peso>200 && peso<=500) extra=120;
+else if(peso>500 && peso<=1000) extra=250;
+else if(peso>1000) extra=400;
+}
+
+let subtotal=km*(base+extra);
+let combustible=subtotal*0.10;
+let total=subtotal+combustible;
+
+return {subtotal,combustible,total};
 }
 
 async function calcular(){
@@ -137,27 +174,31 @@ if(!inicio)return alert('Inicio requerido');
 
 let puntos=[inicio,...direcciones];
 let service=new google.maps.DistanceMatrixService();
-let total=0;
+let totalKM=0;
+let detalleHTML="";
 
 for(let i=0;i<puntos.length-1;i++){
-let res=await new Promise(resolve=>{
-service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travelMode:'DRIVING'},(r)=>resolve(r));
+let res=await new Promise(r=>{
+service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travelMode:'DRIVING'},(d)=>r(d));
 });
 
-let el=res.rows[0].elements[0];
-if(!el||el.status!="OK"){
-alert('Error en dirección');
-return;
+let km=res.rows[0].elements[0].distance.value/1000;
+totalKM+=km;
+
+detalleHTML+=`<p>🚚 Tramo ${i+1}: ${km.toFixed(2)} km<br>${puntos[i]} → ${puntos[i+1]}</p>`;
 }
 
-let km=el.distance.value/1000;
-total+=km;
-}
+let datos=calcularTarifa(totalKM);
 
-let precio=calcularTarifa(total);
-resultadoTXT=`KM: ${total.toFixed(2)} | Total: ₡${precio.toFixed(0)}`;
+kmTotal.innerText=totalKM.toFixed(2)+" km";
+precioTotal.innerText="₡"+datos.total.toFixed(0);
+subtotal.innerText="₡"+datos.subtotal.toFixed(0);
+combustible.innerText="₡"+datos.combustible.toFixed(0);
+detalle.innerHTML=detalleHTML;
 
-alert(resultadoTXT);
+resultadoTXT=`KM:${totalKM} Total:${datos.total}`;
+
+modal.style.display='flex';
 }
 
 function descargar(){
@@ -165,10 +206,11 @@ if(!resultadoTXT)return alert('Calcula primero');
 let blob=new Blob([resultadoTXT]);
 let a=document.createElement('a');
 a.href=URL.createObjectURL(blob);
-a.download='ruta_axis.txt';
+a.download='ruta.txt';
 a.click();
 }
 
+const pesoInput=document.getElementById('peso');
 init();
 
 </script>

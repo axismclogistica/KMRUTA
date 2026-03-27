@@ -9,25 +9,38 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body{font-family:Arial;background:#0a0a0a;color:white;margin:0}
+body{font-family:'Segoe UI',Arial;background:#0b0f14;color:white;margin:0}
 .container{max-width:1100px;margin:auto;padding:25px}
-h1{color:#00c2a8}
-.card{background:#141414;padding:20px;border-radius:15px;margin-top:20px}
+h1{color:#00e0c2}
+.card{background:#121821;padding:20px;border-radius:18px;margin-top:20px;box-shadow:0 0 20px rgba(0,224,194,.1)}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
-label{font-size:14px;color:#aaa}
-select,input{padding:12px;border-radius:10px;border:none;width:100%;background:#1f1f1f;color:white}
+label{font-size:13px;color:#8fa3b0}
+select,input{padding:12px;border-radius:10px;border:none;width:100%;background:#1c2633;color:white}
 button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:10px}
-.btn{background:#00c2a8;color:black}
-.item{background:#1f1f1f;padding:10px;border-radius:8px;margin-bottom:5px}
+.btn{background:linear-gradient(45deg,#00c2a8,#00e0c2);color:black}
+.item{background:#1c2633;padding:10px;border-radius:8px;margin-bottom:5px}
+
+/* MODAL PRO */
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;display:none;background:rgba(0,0,0,.8);justify-content:center;align-items:center}
+.modal-box{background:#121821;padding:25px;border-radius:20px;width:95%;max-width:800px;box-shadow:0 0 60px rgba(0,224,194,.3)}
+.modal-header{display:flex;justify-content:space-between;align-items:center}
+.modal-header h2{color:#00e0c2}
+.close{cursor:pointer;font-size:22px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:15px}
+.stat{background:#1c2633;padding:15px;border-radius:12px;text-align:center}
+.stat small{color:#8fa3b0}
+.stat h3{color:#00e0c2;margin:5px 0}
+.detalle{margin-top:15px;max-height:220px;overflow:auto}
+.detalle div{background:#1c2633;padding:10px;border-radius:10px;margin-bottom:8px;font-size:13px}
 </style>
 </head>
 <body>
 
 <div class="container">
-<h1>Axis MC Logística</h1>
+<h1>🚚 Axis MC Logística</h1>
 
 <div class="card">
-<label>Inicio</label>
+<label>📍 Inicio</label>
 <input id="inicio">
 </div>
 
@@ -36,7 +49,7 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 <label>Vehículo</label>
 <select id="vehiculo">
 <option value="auto">Auto</option>
-<option value="pickup">Pickup</option>
+<option value="pickup">Pickup / Camión</option>
 </select>
 </div>
 <div>
@@ -60,19 +73,37 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 <input id="direccion">
 </div>
 </div>
-<button class="btn" onclick="agregar()">Agregar</button>
+<button class="btn" onclick="agregar()">➕ Agregar</button>
 </div>
 
 <div class="card">
 <div id="lista"></div>
-<button class="btn" onclick="calcular()">Calcular</button>
-<button class="btn" onclick="generarPDF()">PDF</button>
+<button class="btn" onclick="calcular()">📊 Calcular</button>
+<button class="btn" onclick="generarPDF()">📄 PDF</button>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+<div class="modal-box">
+<div class="modal-header">
+<h2>📊 Cotización</h2>
+<span class="close" onclick="modal.style.display='none'">✖</span>
+</div>
+
+<div class="stats">
+<div class="stat"><small>Distancia</small><h3 id="km"></h3></div>
+<div class="stat"><small>Tarifa x KM</small><h3 id="tarifa"></h3></div>
+<div class="stat"><small>Total</small><h3 id="total"></h3></div>
+</div>
+
+<div class="detalle" id="detalle"></div>
 </div>
 </div>
 
 <script>
 
-// ✅ LISTA COMPLETA DE 82 CANTONES
+// CANTONES COMPLETOS
 const cantonesCR={
 "San José":["Central","Escazú","Desamparados","Puriscal","Tarrazú","Aserrí","Mora","Goicoechea","Santa Ana","Alajuelita","Vásquez de Coronado","Acosta","Tibás","Moravia","Montes de Oca","Turrubares","Dota","Curridabat","Pérez Zeledón","León Cortés"],
 "Alajuela":["Central","San Ramón","Grecia","San Mateo","Atenas","Naranjo","Palmares","Poás","Orotina","San Carlos","Zarcero","Sarchí","Upala","Los Chiles","Guatuso","Río Cuarto"],
@@ -87,37 +118,22 @@ let direcciones=[];
 let dataFinal=null;
 
 function init(){
-let prov=document.getElementById('provincia');
-prov.innerHTML='<option value="">Seleccione</option>';
-Object.keys(cantonesCR).forEach(p=>{
-prov.innerHTML+=`<option value="${p}">${p}</option>`;
-});
+provincia.innerHTML='<option>Seleccione</option>';
+Object.keys(cantonesCR).forEach(p=>provincia.innerHTML+=`<option>${p}</option>`);
 }
 
 function loadCantones(){
-let p=document.getElementById('provincia').value;
-let canton=document.getElementById('canton');
-canton.innerHTML='<option value="">Seleccione</option>';
-(cantonesCR[p]||[]).forEach(c=>{
-canton.innerHTML+=`<option value="${c}">${c}</option>`;
-});
+let p=provincia.value;
+canton.innerHTML='';
+(cantonesCR[p]||[]).forEach(c=>canton.innerHTML+=`<option>${c}</option>`);
 }
 
-new google.maps.places.Autocomplete(document.getElementById("inicio"),{componentRestrictions:{country:"cr"}});
-new google.maps.places.Autocomplete(document.getElementById("direccion"),{componentRestrictions:{country:"cr"}});
+new google.maps.places.Autocomplete(inicio,{componentRestrictions:{country:"cr"}});
+new google.maps.places.Autocomplete(direccion,{componentRestrictions:{country:"cr"}});
 
 function agregar(){
-let p=document.getElementById('provincia').value;
-let c=document.getElementById('canton').value;
-let d=document.getElementById('direccion').value;
-if(!p||!c||!d)return alert('Complete datos');
-let dir=`${p}, ${c}, ${d}`;
+let dir=`${provincia.value}, ${canton.value}, ${direccion.value}`;
 direcciones.push(dir);
-render();
-}
-
-function render(){
-let lista=document.getElementById('lista');
 lista.innerHTML=direcciones.map((d,i)=>`<div class='item'>${i+1}. ${d}</div>`).join('');
 }
 
@@ -128,73 +144,77 @@ let extra=0;
 if(pesoVal>50 && pesoVal<=200) extra=620;
 else if(pesoVal>200 && pesoVal<=500) extra=920;
 else if(pesoVal>500 && pesoVal<=1000) extra=1320;
-else if(pesoVal>1000) extra=1520;
+else if(pesoVal>1000) extra=1620;
 return base+extra;
 }
 
 async function calcular(){
-let inicio=document.getElementById('inicio').value;
-if(!inicio)return alert('Inicio requerido');
-
-let puntos=[inicio,...direcciones];
+let puntos=[inicio.value,...direcciones];
 let service=new google.maps.DistanceMatrixService();
 let totalKM=0;
+let detalleHTML="";
 
 for(let i=0;i<puntos.length-1;i++){
 let res=await new Promise(r=>{
 service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travelMode:'DRIVING'},d=>r(d));
 });
-
-let km=res.rows[0].elements[0].distance.value/1000;
-totalKM+=km;
+let kmVal=res.rows[0].elements[0].distance.value/1000;
+totalKM+=kmVal;
+detalleHTML+=`<div>🚚 Tramo ${i+1}: ${kmVal.toFixed(2)} km</div>`;
 }
 
 let tkm=tarifaKM();
 let totalFinal=totalKM*tkm;
 
-alert(`KM: ${totalKM.toFixed(2)}\n₡/KM: ${tkm}\nTOTAL: ₡${totalFinal.toFixed(0)}`);
+km.innerText=totalKM.toFixed(2)+" km";
+tarifa.innerText="₡"+tkm;
+total.innerText="₡"+totalFinal.toFixed(0);
+detalle.innerHTML=detalleHTML;
 
-// guardar para PDF
+// guardar
 dataFinal={totalKM,tkm,totalFinal,puntos};
+
+modal.style.display='flex';
 }
 
 function generarPDF(){
-if(!dataFinal){
-alert('Primero calcula');
-return;
-}
+if(!dataFinal) return alert('Calcula primero');
 
 const { jsPDF } = window.jspdf;
 let doc=new jsPDF();
 
-// 🔥 LOGO (base64 para que SIEMPRE funcione)
-let logo="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
+// Header
+doc.setFillColor(0,194,168);
+doc.rect(0,0,210,25,'F');
+doc.setTextColor(255,255,255);
+doc.setFontSize(16);
+doc.text("Axis MC Logística",10,15);
 
-try{
-doc.text("Axis MC Logística",20,20);
-doc.text("Cotización",20,30);
+doc.setTextColor(0,0,0);
+doc.setFontSize(12);
 
-doc.text(`Inicio: ${dataFinal.puntos[0]}`,20,50);
+let y=40;
+doc.text("📍 Inicio:",10,y);
+y+=6;
+doc.text(dataFinal.puntos[0],10,y);
 
-let y=60;
-dataFinal.puntos.slice(1).forEach((p,i)=>{
-doc.text(`Destino ${i+1}: ${p}`,20,y);
 y+=10;
+dataFinal.puntos.slice(1).forEach((p,i)=>{
+doc.text(`Destino ${i+1}: ${p}`,10,y);
+y+=6;
 });
 
 y+=10;
-doc.text(`KM: ${dataFinal.totalKM.toFixed(2)}`,20,y);
-y+=10;
-doc.text(`Tarifa: ₡${dataFinal.tkm}`,20,y);
-y+=10;
-doc.text(`TOTAL: ₡${dataFinal.totalFinal.toFixed(0)}`,20,y);
+doc.text(`Distancia Total: ${dataFinal.totalKM.toFixed(2)} km`,10,y);
+y+=6;
+doc.text(`Tarifa por KM: ₡${dataFinal.tkm}`,10,y);
+y+=6;
 
-doc.save("Cotizacion_Axis.pdf");
+doc.setFontSize(14);
+doc.text(`TOTAL: ₡${dataFinal.totalFinal.toFixed(0)}`,10,y);
 
-}catch(e){
-alert('Error generando PDF');
-console.error(e);
-}
+
+doc.save("Cotizacion_Axis_MC.pdf");
 }
 
 init();

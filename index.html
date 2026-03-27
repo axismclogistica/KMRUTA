@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Axis MC Logística - Rutas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Google Maps API -->
+ <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b0b0b;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 { color: #00c2a8; }
+
+    .container { max-width: 900px; margin: auto; }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      background: linear-gradient(45deg, #00c2a8, #f59e0b);
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      margin-right: 5px;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #111;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90%;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Axis MC Logística</h1>
+  <p>Calculador de rutas por recorrido real</p>
+
+  <div id="inputs"></div>
+
+  <button onclick="agregarPunto()">+ Agregar Punto</button>
+  <button onclick="calcularRuta()">Calcular</button>
+  <button onclick="descargar()">Descargar</button>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content" id="modalContent"></div>
+</div>
+
+<script>
+let puntos = [];
+let resultadoGlobal = "";
+
+function agregarPunto() {
+  let index = puntos.length;
+
+  let div = document.createElement('div');
+  div.innerHTML = `<input type="text" placeholder="Provincia, Cantón, Distrito, Señas" id="punto${index}" />`;
+
+  document.getElementById('inputs').appendChild(div);
+  puntos.push(null);
+}
+
+async function calcularRuta() {
+  let direcciones = [];
+
+  for (let i = 0; i < puntos.length; i++) {
+    let val = document.getElementById('punto' + i).value;
+    if (val) direcciones.push(val);
+  }
+
+  if (direcciones.length < 2) {
+    alert("Mínimo 2 puntos");
+    return;
+  }
+
+  let service = new google.maps.DistanceMatrixService();
+
+  let totalKm = 0;
+  let detalle = "";
+
+  for (let i = 0; i < direcciones.length - 1; i++) {
+    let origen = direcciones[i];
+    let destino = direcciones[i + 1];
+
+    let data = await new Promise((resolve, reject) => {
+      service.getDistanceMatrix({
+        origins: [origen],
+        destinations: [destino],
+        travelMode: 'DRIVING'
+      }, (res, status) => {
+        if (status === 'OK') resolve(res);
+        else reject(status);
+      });
+    });
+
+    let km = data.rows[0].elements[0].distance.value / 1000;
+    totalKm += km;
+
+    detalle += `\n${i+1}. ${origen} → ${destino} = ${km.toFixed(2)} km`;
+  }
+
+  let precio = totalKm * 580;
+
+  resultadoGlobal = `Ruta:\n${direcciones.join(" -> ")}\n\nDetalle:${detalle}\n\nTotal KM: ${totalKm.toFixed(2)}\nCosto: ₡${precio.toFixed(0)}`;
+
+  document.getElementById('modalContent').innerHTML = `
+    <h3>Resultado</h3>
+    <p><b>Total KM:</b> ${totalKm.toFixed(2)}</p>
+    <p><b>Costo:</b> ₡${precio.toFixed(0)}</p>
+    <pre>${detalle}</pre>
+    <button onclick="cerrarModal()">Cerrar</button>
+  `;
+
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function cerrarModal() {
+  document.getElementById('modal').style.display = 'none';
+}
+
+function descargar() {
+  if (!resultadoGlobal) {
+    alert("Primero calcula la ruta");
+    return;
+  }
+
+  let blob = new Blob([resultadoGlobal], { type: 'text/plain' });
+  let link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = "ruta_axis_mc.txt";
+  link.click();
+}
+
+// inicial
+agregarPunto();
+agregarPunto();
+</script>
+
+</body>
+</html>

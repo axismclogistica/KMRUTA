@@ -1,169 +1,149 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Axis MC Logística - Rutas</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Axis MC Logística</title>
 
-  <!-- Google Maps API -->
- <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0b0b0b;
-      color: white;
-      padding: 20px;
-    }
+<script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY"></script>
 
-    h1 { color: #00c2a8; }
+<style>
+body{font-family:Arial;background:#0a0a0a;color:white;margin:0;padding:0}
+.container{max-width:1100px;margin:auto;padding:20px}
+.header{display:flex;align-items:center;gap:15px}
+.header img{width:70px}
+h1{color:#00c2a8;margin:0}
 
-    .container { max-width: 900px; margin: auto; }
+.card{background:#111;padding:15px;border-radius:12px;margin-top:15px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+input{padding:10px;border-radius:8px;border:none;width:100%}
+button{padding:12px;border:none;border-radius:10px;font-weight:bold;cursor:pointer}
+.btn{background:linear-gradient(45deg,#00c2a8,#f59e0b);color:black}
+.btn2{background:#222;color:white}
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 8px;
-      border: none;
-    }
+.lista{margin-top:15px}
+.item{background:#1a1a1a;padding:10px;border-radius:8px;margin-bottom:5px}
 
-    button {
-      background: linear-gradient(45deg, #00c2a8, #f59e0b);
-      border: none;
-      padding: 12px;
-      border-radius: 10px;
-      color: black;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
-      margin-right: 5px;
-    }
-
-    .modal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal-content {
-      background: #111;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 500px;
-      width: 90%;
-    }
-  </style>
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;display:none;background:rgba(0,0,0,.7);justify-content:center;align-items:center}
+.modal-content{background:#111;padding:20px;border-radius:12px;max-width:600px;width:90%}
+</style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Axis MC Logística</h1>
-  <p>Calculador de rutas por recorrido real</p>
 
-  <div id="inputs"></div>
-
-  <button onclick="agregarPunto()">+ Agregar Punto</button>
-  <button onclick="calcularRuta()">Calcular</button>
-  <button onclick="descargar()">Descargar</button>
+<div class="header">
+<img src="https://github.com/axismclogistica/axis-mc-logistica/blob/main/Logo%20Axismc.png?raw=true">
+<h1>Axis MC Logística</h1>
 </div>
 
-<!-- Modal -->
+<div class="card">
+<h3>Inicio de Ruta</h3>
+<input id="inicio" placeholder="Ej: Heredia Centro, Costa Rica">
+</div>
+
+<div class="card">
+<h3>Agregar destino</h3>
+<div class="grid">
+<input id="provincia" placeholder="Provincia">
+<input id="canton" placeholder="Cantón">
+<input id="distrito" placeholder="Distrito">
+<input id="senas" placeholder="Señas">
+</div>
+<button class="btn" onclick="agregar()">Agregar a lista</button>
+</div>
+
+<div class="card">
+<h3>Lista de rutas</h3>
+<div id="lista" class="lista"></div>
+<button class="btn" onclick="calcular()">Calcular Ruta</button>
+<button class="btn2" onclick="descargar()">Descargar</button>
+</div>
+
+</div>
+
 <div class="modal" id="modal">
-  <div class="modal-content" id="modalContent"></div>
+<div class="modal-content" id="resultado"></div>
 </div>
 
 <script>
-let puntos = [];
-let resultadoGlobal = "";
+let direcciones=[];
+let resultadoTXT="";
 
-function agregarPunto() {
-  let index = puntos.length;
+function agregar(){
+let p=document.getElementById('provincia').value;
+let c=document.getElementById('canton').value;
+let d=document.getElementById('distrito').value;
+let s=document.getElementById('senas').value;
 
-  let div = document.createElement('div');
-  div.innerHTML = `<input type="text" placeholder="Provincia, Cantón, Distrito, Señas" id="punto${index}" />`;
+if(!p||!c||!d) return alert('Completa al menos provincia, cantón y distrito');
 
-  document.getElementById('inputs').appendChild(div);
-  puntos.push(null);
+let dir=`${p}, ${c}, ${d}, ${s}`;
+direcciones.push(dir);
+renderLista();
 }
 
-async function calcularRuta() {
-  let direcciones = [];
-
-  for (let i = 0; i < puntos.length; i++) {
-    let val = document.getElementById('punto' + i).value;
-    if (val) direcciones.push(val);
-  }
-
-  if (direcciones.length < 2) {
-    alert("Mínimo 2 puntos");
-    return;
-  }
-
-  let service = new google.maps.DistanceMatrixService();
-
-  let totalKm = 0;
-  let detalle = "";
-
-  for (let i = 0; i < direcciones.length - 1; i++) {
-    let origen = direcciones[i];
-    let destino = direcciones[i + 1];
-
-    let data = await new Promise((resolve, reject) => {
-      service.getDistanceMatrix({
-        origins: [origen],
-        destinations: [destino],
-        travelMode: 'DRIVING'
-      }, (res, status) => {
-        if (status === 'OK') resolve(res);
-        else reject(status);
-      });
-    });
-
-    let km = data.rows[0].elements[0].distance.value / 1000;
-    totalKm += km;
-
-    detalle += `\n${i+1}. ${origen} → ${destino} = ${km.toFixed(2)} km`;
-  }
-
-  let precio = totalKm * 580;
-
-  resultadoGlobal = `Ruta:\n${direcciones.join(" -> ")}\n\nDetalle:${detalle}\n\nTotal KM: ${totalKm.toFixed(2)}\nCosto: ₡${precio.toFixed(0)}`;
-
-  document.getElementById('modalContent').innerHTML = `
-    <h3>Resultado</h3>
-    <p><b>Total KM:</b> ${totalKm.toFixed(2)}</p>
-    <p><b>Costo:</b> ₡${precio.toFixed(0)}</p>
-    <pre>${detalle}</pre>
-    <button onclick="cerrarModal()">Cerrar</button>
-  `;
-
-  document.getElementById('modal').style.display = 'flex';
+function renderLista(){
+let html="";
+direcciones.forEach((d,i)=>{
+html+=`<div class="item">${i+1}. ${d}</div>`;
+});
+document.getElementById('lista').innerHTML=html;
 }
 
-function cerrarModal() {
-  document.getElementById('modal').style.display = 'none';
+async function calcular(){
+let inicio=document.getElementById('inicio').value;
+if(!inicio) return alert('Debes poner inicio de ruta');
+if(direcciones.length<1) return alert('Agrega destinos');
+
+let service=new google.maps.DistanceMatrixService();
+
+let puntos=[inicio,...direcciones];
+let total=0;
+let detalle="";
+
+for(let i=0;i<puntos.length-1;i++){
+let data=await new Promise((res,rej)=>{
+service.getDistanceMatrix({
+origins:[puntos[i]],
+destinations:[puntos[i+1]],
+travelMode:'DRIVING'
+},(r,s)=>{if(s==='OK')res(r);else rej(s);});
+});
+
+let km=data.rows[0].elements[0].distance.value/1000;
+total+=km;
+
+detalle+=`<p>${i+1}. ${puntos[i]} → ${puntos[i+1]} = ${km.toFixed(2)} km</p>`;
 }
 
-function descargar() {
-  if (!resultadoGlobal) {
-    alert("Primero calcula la ruta");
-    return;
-  }
+let precio=total*580;
 
-  let blob = new Blob([resultadoGlobal], { type: 'text/plain' });
-  let link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = "ruta_axis_mc.txt";
-  link.click();
+resultadoTXT=`Inicio: ${inicio}\n\n${direcciones.join('\n')}\n\nTotal KM: ${total.toFixed(2)}\nCosto: ₡${precio.toFixed(0)}`;
+
+
+document.getElementById('resultado').innerHTML=`
+<h2>Resultado</h2>
+<p><b>Total KM:</b> ${total.toFixed(2)}</p>
+<p><b>Costo:</b> ₡${precio.toFixed(0)}</p>
+${detalle}
+<br>
+<button class="btn" onclick="cerrar()">Cerrar</button>
+`;
+
+document.getElementById('modal').style.display='flex';
 }
 
-// inicial
-agregarPunto();
-agregarPunto();
+function cerrar(){document.getElementById('modal').style.display='none'}
+
+function descargar(){
+if(!resultadoTXT)return alert('Calcula primero');
+let blob=new Blob([resultadoTXT],{type:'text/plain'});
+let a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download='ruta_axis.txt';
+a.click();
+}
 </script>
 
 </body>

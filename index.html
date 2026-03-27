@@ -5,146 +5,149 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Axis MC Logística</title>
 
-<!-- API YA PUESTA -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8&libraries=places"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY"></script>
 
 <style>
-body{font-family:Arial;background:linear-gradient(135deg,#0a0a0a,#111);color:white;margin:0}
+body{font-family:Arial;background:#0a0a0a;color:white;margin:0}
 .container{max-width:1100px;margin:auto;padding:25px}
-.header{display:flex;align-items:center;gap:15px;margin-bottom:20px}
-.header img{width:70px}
-h1{color:#00c2a8;font-size:28px}
-
-.card{background:#141414;padding:20px;border-radius:15px;margin-top:20px;box-shadow:0 10px 25px rgba(0,0,0,.5)}
+h1{color:#00c2a8}
+.card{background:#141414;padding:20px;border-radius:15px;margin-top:20px}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
-
-label{font-size:14px;color:#aaa;margin-bottom:5px;display:block}
-input{padding:14px;border-radius:10px;border:none;width:100%;background:#1f1f1f;color:white;font-size:15px}
-
-button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:10px;font-size:15px}
-.btn{background:linear-gradient(45deg,#00c2a8,#00e0c2);color:black}
-.btn2{background:#222;color:white}
-
-.lista{margin-top:15px}
-.item{background:#1f1f1f;padding:12px;border-radius:10px;margin-bottom:8px;font-size:14px}
-
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;display:none;background:rgba(0,0,0,.8);justify-content:center;align-items:center}
-.modal-content{background:#111;padding:25px;border-radius:15px;max-width:600px;width:90%}
+label{font-size:14px;color:#aaa}
+select,input{padding:12px;border-radius:10px;border:none;width:100%;background:#1f1f1f;color:white}
+button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:10px}
+.btn{background:#00c2a8;color:black}
+.lista{margin-top:10px}
+.item{background:#1f1f1f;padding:10px;border-radius:8px;margin-bottom:5px}
 </style>
 </head>
 <body>
 
 <div class="container">
-<div class="header">
-<img src="https://github.com/axismclogistica/axis-mc-logistica/blob/main/Logo%20Axismc.png?raw=true">
 <h1>Axis MC Logística</h1>
-</div>
 
 <div class="card">
 <label>Inicio de Ruta</label>
-<input id="inicio" placeholder="Ej: Heredia Centro">
+<input id="inicio">
 </div>
 
 <div class="card">
-<h3>Agregar destino</h3>
 <div class="grid">
 <div>
 <label>Provincia</label>
-<input id="provincia" placeholder="Ej: Heredia">
+<select id="provincia" onchange="loadCantones()"></select>
 </div>
 <div>
 <label>Cantón</label>
-<input id="canton" placeholder="Ej: San Pablo">
+<select id="canton" onchange="loadDistritos()"></select>
 </div>
 <div>
 <label>Distrito</label>
-<input id="distrito" placeholder="Ej: Rincón de Sabanilla">
+<select id="distrito"></select>
 </div>
 <div>
 <label>Señas</label>
-<input id="senas" placeholder="Referencia exacta">
+<input id="senas">
 </div>
 </div>
-<button class="btn" onclick="agregar()">Agregar a lista</button>
+<button class="btn" onclick="agregar()">Agregar</button>
 </div>
 
 <div class="card">
-<h3>Rutas</h3>
-<div id="lista" class="lista"></div>
-<button class="btn" onclick="calcular()">Calcular Ruta</button>
-<button class="btn2" onclick="descargar()">Descargar</button>
-</div>
+<div id="lista"></div>
+<button class="btn" onclick="calcular()">Calcular</button>
 </div>
 
-<div class="modal" id="modal">
-<div class="modal-content" id="resultado"></div>
 </div>
 
 <script>
-let direcciones=[];
-let resultadoTXT="";
 
-function agregar(){
+const dataCR={
+"San José":{
+"Central":["Carmen","Merced","Hospital","Catedral","Zapote"],
+"Escazú":["Escazú","San Rafael","San Antonio"]
+},
+"Alajuela":{
+"Central":["Alajuela","San José","Carrizal"],
+"San Ramón":["San Ramón","Santiago"]
+},
+"Heredia":{
+"Heredia":["Heredia","Mercedes","San Francisco"],
+"Santo Domingo":["Santo Domingo","San Vicente"]
+},
+"Cartago":{
+"Central":["Oriental","Occidental","Carmen"]
+},
+"Guanacaste":{
+"Liberia":["Liberia","Cañas Dulces"]
+},
+"Puntarenas":{
+"Puntarenas":["Puntarenas","Chacarita"]
+},
+"Limón":{
+"Limón":["Limón","Valle La Estrella"]
+}
+};
+
+let direcciones=[];
+
+function init(){
+let p=document.getElementById('provincia');
+p.innerHTML='<option value="">Seleccione</option>';
+Object.keys(dataCR).forEach(x=>p.innerHTML+=`<option value="${x}">${x}</option>`);
+}
+
+function loadCantones(){
+let p=provincia.value;
+let c=document.getElementById('canton');
+c.innerHTML='';
+Object.keys(dataCR[p]||{}).forEach(x=>c.innerHTML+=`<option value="${x}">${x}</option>`);
+loadDistritos();
+}
+
+function loadDistritos(){
 let p=provincia.value;
 let c=canton.value;
-let d=distrito.value;
-let s=senas.value;
+let d=document.getElementById('distrito');
+d.innerHTML='';
+(dataCR[p]?.[c]||[]).forEach(x=>d.innerHTML+=`<option value="${x}">${x}</option>`);
+}
 
-if(!p||!c||!d)return alert('Completa provincia, cantón y distrito');
-
-let dir=`${p}, ${c}, ${d}, Costa Rica ${s}`;
+function agregar(){
+if(!provincia.value||!canton.value||!distrito.value)return alert('Completa datos');
+let dir=`${provincia.value}, ${canton.value}, ${distrito.value}, Costa Rica ${senas.value}`;
 direcciones.push(dir);
 render();
 }
 
 function render(){
-let html="";
-direcciones.forEach((d,i)=>html+=`<div class='item'>${i+1}. ${d}</div>`);
-lista.innerHTML=html;
+lista.innerHTML=direcciones.map((d,i)=>`<div class='item'>${i+1}. ${d}</div>`).join('');
 }
 
 async function calcular(){
 let inicio=document.getElementById('inicio').value;
-if(!inicio)return alert('Debes poner inicio');
-if(direcciones.length===0)return alert('Agrega destinos');
+if(!inicio)return alert('Inicio requerido');
 
-let service=new google.maps.DistanceMatrixService();
 let puntos=[inicio,...direcciones];
-let total=0; let detalle="";
+let service=new google.maps.DistanceMatrixService();
+let total=0;
 
 for(let i=0;i<puntos.length-1;i++){
-let res=await new Promise(r=>{
-service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travelMode:'DRIVING'},(d)=>r(d));
+let res=await new Promise(resolve=>{
+service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travelMode:'DRIVING'},(r)=>resolve(r));
 });
+
+if(!res.rows[0].elements[0].distance){alert('Error en dirección');return;}
 
 let km=res.rows[0].elements[0].distance.value/1000;
 total+=km;
-
-detalle+=`<p>${i+1}. ${puntos[i]} → ${puntos[i+1]} = ${km.toFixed(2)} km</p>`;
 }
 
-let precio=total*580;
-
-resultadoTXT=`Ruta:\n${puntos.join(' -> ')}\n\nTotal KM: ${total.toFixed(2)}\nCosto: ₡${precio.toFixed(0)}`;
-
-resultado.innerHTML=`
-<h2>Total: ${total.toFixed(2)} km</h2>
-<h3>₡${precio.toFixed(0)}</h3>
-${detalle}
-<button class="btn" onclick="modal.style.display='none'">Cerrar</button>
-`;
-
-modal.style.display='flex';
+alert('Total KM: '+total.toFixed(2)+' | ₡'+(total*580).toFixed(0));
 }
 
-function descargar(){
-if(!resultadoTXT)return alert('Calcula primero');
-let blob=new Blob([resultadoTXT]);
-let a=document.createElement('a');
-a.href=URL.createObjectURL(blob);
-a.download='ruta_axis.txt';
-a.click();
-}
+init();
+
 </script>
 
 </body>

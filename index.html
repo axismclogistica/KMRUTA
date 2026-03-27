@@ -3,136 +3,80 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Axis MC Logística</title>
+<title>Axis MC Logística PRO</title>
 
-<!-- API CORRECTA -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8"></script>
 
 <style>
-body{font-family:Arial;background:#0a0a0a;color:white;margin:0}
-.container{max-width:1100px;margin:auto;padding:25px}
+body{margin:0;font-family:Arial;background:#0b0b0b;color:white}
+.container{max-width:1200px;margin:auto;padding:20px}
 h1{color:#00c2a8}
-.card{background:#141414;padding:20px;border-radius:15px;margin-top:20px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
-label{font-size:14px;color:#aaa}
-select,input{padding:12px;border-radius:10px;border:none;width:100%;background:#1f1f1f;color:white}
+.card{background:#141414;padding:20px;border-radius:15px;margin-top:15px}
+input{width:100%;padding:14px;border-radius:10px;border:none;background:#1f1f1f;color:white;margin-top:5px}
 button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:10px}
-.btn{background:#00c2a8;color:black}
+.btn{background:linear-gradient(45deg,#00c2a8,#00e0c2);color:black}
 .lista{margin-top:10px}
 .item{background:#1f1f1f;padding:10px;border-radius:8px;margin-bottom:5px}
+#map{height:400px;margin-top:15px;border-radius:15px}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;display:none;background:rgba(0,0,0,.8);justify-content:center;align-items:center}
+.modal-content{background:#111;padding:25px;border-radius:15px;width:95%;max-width:700px}
 </style>
 </head>
 <body>
 
 <div class="container">
-<h1>Axis MC Logística</h1>
+<h1>Axis MC Logística PRO</h1>
 
 <div class="card">
 <label>Inicio de Ruta</label>
-<input id="inicio" placeholder="Ej: Heredia Centro">
+<input id="inicio">
 </div>
 
 <div class="card">
-<div class="grid">
-<div>
-<label>Provincia</label>
-<select id="provincia" onchange="loadCantones()"></select>
-</div>
-<div>
-<label>Cantón</label>
-<select id="canton" onchange="loadDistritos()"></select>
-</div>
-<div>
-<label>Distrito</label>
-<select id="distrito"></select>
-</div>
-<div>
-<label>Señas (opcional)</label>
-<input id="senas" placeholder="Opcional">
-</div>
-</div>
+<label>Agregar destino (autocompletado)</label>
+<input id="direccion">
 <button class="btn" onclick="agregar()">Agregar</button>
 </div>
 
 <div class="card">
+<h3>Ruta</h3>
 <div id="lista"></div>
-<button class="btn" onclick="calcular()">Calcular</button>
+<button class="btn" onclick="calcular()">Calcular Ruta</button>
+<button class="btn" onclick="descargar()">Descargar PDF</button>
 </div>
 
+<div id="map"></div>
+</div>
+
+<div class="modal" id="modal">
+<div class="modal-content" id="resultado"></div>
 </div>
 
 <script>
-
-// BASE MÁS COMPLETA CR
-const dataCR={
-"San José":{
-"Central":["Carmen","Merced","Hospital","Catedral","Zapote","San Francisco de Dos Ríos"],
-"Escazú":["Escazú","San Rafael","San Antonio"],
-"Desamparados":["Desamparados","San Miguel","San Juan de Dios","San Rafael Arriba"]
-},
-"Alajuela":{
-"Central":["Alajuela","San José","Carrizal","San Antonio"],
-"San Ramón":["San Ramón","Santiago","San Juan"]
-},
-"Heredia":{
-"Heredia":["Heredia","Mercedes","San Francisco","Ulloa"],
-"Santo Domingo":["Santo Domingo","San Vicente","Paracito"],
-"San Pablo":["San Pablo","Rincón de Sabanilla"]
-},
-"Cartago":{
-"Central":["Oriental","Occidental","Carmen","San Nicolás"],
-"Paraíso":["Paraíso","Santiago","Orosi"]
-},
-"Guanacaste":{
-"Liberia":["Liberia","Cañas Dulces","Mayorga"],
-"Nicoya":["Nicoya","Mansión","Sámara"]
-},
-"Puntarenas":{
-"Puntarenas":["Puntarenas","Chacarita","Barranca"],
-"Garabito":["Jacó","Tárcoles"]
-},
-"Limón":{
-"Limón":["Limón","Valle La Estrella","Río Blanco"],
-"Pococí":["Guápiles","Cariari","Rita"]
-}
-};
-
 let direcciones=[];
+let resultadoTXT="";
+let map;
+let directionsService;
+let directionsRenderer;
 
-function init(){
-provincia.innerHTML='<option value="">Seleccione</option>';
-Object.keys(dataCR).forEach(p=>{
-provincia.innerHTML+=`<option value="${p}">${p}</option>`;
+function initMap(){
+map=new google.maps.Map(document.getElementById("map"),{
+center:{lat:9.93,lng:-84.08},
+zoom:10
 });
+
+directionsService=new google.maps.DirectionsService();
+directionsRenderer=new google.maps.DirectionsRenderer();
+directionsRenderer.setMap(map);
 }
 
-function loadCantones(){
-let p=provincia.value;
-canton.innerHTML='';
-Object.keys(dataCR[p]||{}).forEach(c=>{
-canton.innerHTML+=`<option value="${c}">${c}</option>`;
+const autocomplete=new google.maps.places.Autocomplete(document.getElementById("direccion"),{
+componentRestrictions:{country:"cr"}
 });
-loadDistritos();
-}
-
-function loadDistritos(){
-let p=provincia.value;
-let c=canton.value;
-distrito.innerHTML='';
-(dataCR[p]?.[c]||[]).forEach(d=>{
-distrito.innerHTML+=`<option value="${d}">${d}</option>`;
-});
-}
 
 function agregar(){
-if(!provincia.value||!canton.value||!distrito.value)return alert('Faltan datos');
-
-let dir=`${provincia.value}, ${canton.value}, ${distrito.value}, Costa Rica`;
-
-if(senas.value.trim()!==""){
-dir+=` ${senas.value}`;
-}
-
+let dir=document.getElementById("direccion").value;
+if(!dir)return alert("Escribe dirección");
 
 direcciones.push(dir);
 render();
@@ -143,33 +87,63 @@ lista.innerHTML=direcciones.map((d,i)=>`<div class='item'>${i+1}. ${d}</div>`).j
 }
 
 async function calcular(){
-let inicio=document.getElementById('inicio').value;
-if(!inicio)return alert('Inicio requerido');
+let inicio=document.getElementById("inicio").value;
+if(!inicio)return alert("Inicio requerido");
 
-let puntos=[inicio,...direcciones];
-let service=new google.maps.DistanceMatrixService();
+let waypoints=direcciones.map(d=>({location:d,stopover:true}));
+
+let request={
+origin:inicio,
+destination:direcciones[direcciones.length-1],
+waypoints:waypoints.slice(0,-1),
+travelMode:'DRIVING'
+};
+
+
+directionsService.route(request,function(result,status){
+if(status==='OK'){
+directionsRenderer.setDirections(result);
+
 let total=0;
+let legs=result.routes[0].legs;
+let detalle="";
 
-for(let i=0;i<puntos.length-1;i++){
-let res=await new Promise(resolve=>{
-service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travelMode:'DRIVING'},(r)=>resolve(r));
+legs.forEach((leg,i)=>{
+let km=leg.distance.value/1000;
+total+=km;
+detalle+=`<p><b>Tramo ${i+1}:</b> ${km.toFixed(2)} km<br>${leg.start_address} → ${leg.end_address}</p>`;
 });
 
-let el=res.rows[0].elements[0];
-if(!el||el.status!="OK"){
-alert('Error en dirección: '+puntos[i]);
-return;
+let precio=total*580;
+
+resultadoTXT=`Total KM: ${total.toFixed(2)} | ₡${precio.toFixed(0)}`;
+
+resultado.innerHTML=`
+<h2>Resumen</h2>
+<p><b>Total KM:</b> ${total.toFixed(2)}</p>
+<p><b>Total ₡:</b> ${precio.toFixed(0)}</p>
+${detalle}
+<button class='btn' onclick='modal.style.display="none"'>Cerrar</button>
+`;
+
+modal.style.display='flex';
+
+}else{
+alert('Error en ruta');
+}
+});
 }
 
-let km=el.distance.value/1000;
-total+=km;
+function descargar(){
+if(!resultadoTXT)return alert("Calcula primero");
+let blob=new Blob([resultadoTXT],{type:'text/plain'});
+let a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download='ruta_axis_pro.txt';
+a.click();
 }
 
-alert(`Total: ${total.toFixed(2)} km | ₡${(total*580).toFixed(0)}`);
-}
-
-init();
-
+window.onload=initMap;
 </script>
 
 </body>

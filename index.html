@@ -5,10 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Axis MC Logística PRO</title>
 
-<!-- Google Maps -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8&libraries=places"></script>
-
-<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
@@ -23,18 +20,14 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 .btn{background:linear-gradient(45deg,#00c2a8,#00e0c2);color:black}
 .item{background:#1f1f1f;padding:10px;border-radius:8px;margin-bottom:5px}
 
-/* MODAL */
 .modal{position:fixed;top:0;left:0;width:100%;height:100%;display:none;background:rgba(0,0,0,.85);justify-content:center;align-items:center}
 .modal-content{background:#111;padding:25px;border-radius:18px;width:95%;max-width:750px;box-shadow:0 0 50px rgba(0,194,168,.4)}
-.header{display:flex;justify-content:space-between;align-items:center}
-.header h2{color:#00e0c2}
-.close{cursor:pointer;font-size:22px}
+.header{display:flex;justify-content:space-between}
 .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:15px}
 .box{background:#1a1a1a;padding:15px;border-radius:12px;text-align:center}
-.box span{font-size:12px;color:#aaa}
-.box h3{margin:5px 0;color:#00e0c2}
-.detalle{margin-top:15px;max-height:200px;overflow:auto}
-.detalle p{background:#1f1f1f;padding:10px;border-radius:8px;margin-bottom:8px;font-size:13px}
+.box h3{color:#00e0c2}
+.detalle{margin-top:15px}
+.detalle p{background:#1f1f1f;padding:10px;border-radius:8px}
 </style>
 </head>
 <body>
@@ -49,14 +42,14 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 
 <div class="card grid">
 <div>
-<label>🚗 Vehículo</label>
+<label>Vehículo</label>
 <select id="vehiculo">
 <option value="auto">Auto</option>
-<option value="pickup">Pick Up / Camión</option>
+<option value="pickup">PickUp / Camión</option>
 </select>
 </div>
 <div>
-<label>📦 Peso (kg)</label>
+<label>Peso</label>
 <input id="peso">
 </div>
 </div>
@@ -76,28 +69,27 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 <input id="direccion">
 </div>
 </div>
-<button class="btn" onclick="agregar()">➕ Agregar destino</button>
+<button class="btn" onclick="agregar()">Agregar</button>
 </div>
 
 <div class="card">
 <div id="lista"></div>
-<button class="btn" onclick="calcular()">📊 Calcular Ruta</button>
-<button class="btn" onclick="generarPDF()">📄 Descargar PDF</button>
+<button class="btn" onclick="calcular()">Calcular</button>
+<button class="btn" onclick="generarPDF()">PDF</button>
 </div>
 </div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
 <div class="header">
 <h2>📊 Cotización</h2>
-<span class="close" onclick="modal.style.display='none'">✖</span>
+<span onclick="modal.style.display='none'">✖</span>
 </div>
 
 <div class="summary">
-<div class="box"><span>KM</span><h3 id="km"></h3></div>
-<div class="box"><span>₡ / KM</span><h3 id="tarifa"></h3></div>
-<div class="box"><span>Total</span><h3 id="total"></h3></div>
+<div class="box"><p>KM</p><h3 id="km"></h3></div>
+<div class="box"><p>₡/KM</p><h3 id="tarifa"></h3></div>
+<div class="box"><p>Total</p><h3 id="total"></h3></div>
 </div>
 
 <div class="detalle" id="detalle"></div>
@@ -105,34 +97,19 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 </div>
 
 <script>
-
-// CANTONES COMPLETOS
-const cantonesCR={
-"San José":["Central","Escazú","Desamparados","Puriscal","Tarrazú","Aserrí","Mora","Goicoechea","Santa Ana","Alajuelita","Vásquez de Coronado","Acosta","Tibás","Moravia","Montes de Oca","Turrubares","Dota","Curridabat","Pérez Zeledón","León Cortés"],
-"Alajuela":["Central","San Ramón","Grecia","San Mateo","Atenas","Naranjo","Palmares","Poás","Orotina","San Carlos","Zarcero","Sarchí","Upala","Los Chiles","Guatuso","Río Cuarto"],
-"Cartago":["Central","Paraíso","La Unión","Jiménez","Turrialba","Alvarado","Oreamuno","El Guarco"],
-"Heredia":["Heredia","Barva","Santo Domingo","Santa Bárbara","San Rafael","San Isidro","Belén","Flores","San Pablo","Sarapiquí"],
-"Guanacaste":["Liberia","Nicoya","Santa Cruz","Bagaces","Carrillo","Cañas","Abangares","Tilarán","Nandayure","La Cruz","Hojancha"],
-"Puntarenas":["Puntarenas","Esparza","Buenos Aires","Montes de Oro","Osa","Quepos","Golfito","Coto Brus","Parrita","Corredores","Garabito"],
-"Limón":["Limón","Pococí","Siquirres","Talamanca","Matina","Guácimo"]
-};
-
+const cantonesCR={"San José":["Central","Escazú"],"Heredia":["Heredia"]};
 let direcciones=[];
-let ultimoResultado=null;
+let dataFinal=null;
 
 function init(){
-provincia.innerHTML='<option value="">Seleccione</option>';
-Object.keys(cantonesCR).forEach(p=>{
-provincia.innerHTML+=`<option>${p}</option>`;
-});
+provincia.innerHTML='<option>Seleccione</option>';
+Object.keys(cantonesCR).forEach(p=>provincia.innerHTML+=`<option>${p}</option>`);
 }
 
 function loadCantones(){
 let p=provincia.value;
 canton.innerHTML='';
-(cantonesCR[p]||[]).forEach(c=>{
-canton.innerHTML+=`<option>${c}</option>`;
-});
+(cantonesCR[p]||[]).forEach(c=>canton.innerHTML+=`<option>${c}</option>`);
 }
 
 new google.maps.places.Autocomplete(inicio,{componentRestrictions:{country:"cr"}});
@@ -146,21 +123,13 @@ lista.innerHTML=direcciones.map((d,i)=>`<div class='item'>${i+1}. ${d}</div>`).j
 
 function tarifaKM(){
 let base=580;
-
-let tipo = document.getElementById('vehiculo').value;
-let pesoInput = document.getElementById('peso');
-let peso = parseFloat(pesoInput.value) || 0;
-
+let pesoVal=parseFloat(document.getElementById('peso').value)||0;
 let extra=0;
-
-if(tipo!=='auto'){
-  if(peso>50 && peso<=200) extra=620;
-  else if(peso>200 && peso<=500) extra=920;
-  else if(peso>500 && peso<=1000) extra=1220;
-  else if(peso>1000) extra=1420;
-}
-
-return base + extra;
+if(pesoVal>50 && pesoVal<=200) extra=620;
+else if(pesoVal>200 && pesoVal<=500) extra=920;
+else if(pesoVal>500 && pesoVal<=1000) extra=1320;
+else if(pesoVal>1000) extra=1520;
+return base+extra;
 }
 
 async function calcular(){
@@ -173,37 +142,63 @@ for(let i=0;i<puntos.length-1;i++){
 let res=await new Promise(r=>{
 service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travelMode:'DRIVING'},d=>r(d));
 });
-let km=res.rows[0].elements[0].distance.value/1000;
-totalKM+=km;
-detalleHTML+=`<p>🚚 Tramo ${i+1}: ${km.toFixed(2)} km</p>`;
+let kmVal=res.rows[0].elements[0].distance.value/1000;
+totalKM+=kmVal;
+detalleHTML+=`<p>🚚 Tramo ${i+1}: ${kmVal.toFixed(2)} km</p>`;
 }
 
 let tkm=tarifaKM();
-let total=totalKM*tkm;
+let totalFinal=totalKM*tkm;
 
 km.innerText=totalKM.toFixed(2);
 tarifa.innerText="₡"+tkm;
-total.innerText="₡"+total.toFixed(0);
+total.innerText="₡"+totalFinal.toFixed(0);
 detalle.innerHTML=detalleHTML;
 
-ultimoResultado={totalKM,tkm,total,detalleHTML};
+// 🔥 AQUÍ ESTABA EL ERROR, ahora guardamos bien
+dataFinal={totalKM,tkm,totalFinal,detalleHTML,puntos};
 
 modal.style.display='flex';
 }
 
 function generarPDF(){
-if(!ultimoResultado) return alert('Primero calcula');
-
+if(!dataFinal)return alert('Calcula primero');
 const { jsPDF } = window.jspdf;
 let doc=new jsPDF();
 
-doc.setFontSize(16);
-doc.text("Axis MC Logística",20,20);
+// LOGO
+let img="https://github.com/axismclogistica/axis-mc-logistica/blob/main/Logo%20Axismc.png?raw=true";
+
+// encabezado
+doc.addImage(img,'PNG',15,10,40,20);
+doc.setFontSize(18);
+doc.text("Axis MC Logística",70,20);
 
 doc.setFontSize(12);
-doc.text(`KM Totales: ${ultimoResultado.totalKM.toFixed(2)}`,20,40);
-doc.text(`Tarifa KM: ₡${ultimoResultado.tkm}`,20,50);
-doc.text(`Total: ₡${ultimoResultado.total.toFixed(0)}`,20,60);
+doc.text("Cotización de Servicio",70,30);
+
+// datos
+let y=50;
+doc.text(`Inicio: ${dataFinal.puntos[0]}`,20,y);
+y+=10;
+
+dataFinal.puntos.slice(1).forEach((p,i)=>{
+doc.text(`Destino ${i+1}: ${p}`,20,y);
+y+=10;
+});
+
+// resumen
+y+=10;
+doc.text(`KM Totales: ${dataFinal.totalKM.toFixed(2)}`,20,y);
+y+=10;
+doc.text(`Tarifa por KM: ₡${dataFinal.tkm}`,20,y);
+y+=10;
+doc.text(`TOTAL: ₡${dataFinal.totalFinal.toFixed(0)}`,20,y);
+
+// footer
+y+=20;
+doc.setFontSize(10);
+doc.text("Gracias por confiar en Axis MC Logística",20,y);
 
 doc.save("Cotizacion_Axis_MC.pdf");
 }

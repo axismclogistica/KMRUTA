@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Axis MC Logística</title>
+<title>Axis MC Logística - Cotizador Pro</title>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8&libraries=places"></script>
 
 <style>
 body{font-family:Arial;background:#0a0a0a;color:white;margin:0}
@@ -29,6 +29,20 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 <div class="card">
 <label>Inicio de Ruta</label>
 <input id="inicio" placeholder="Ej: Heredia Centro">
+</div>
+
+<div class="card grid">
+<div>
+<label>Tipo de Vehículo</label>
+<select id="vehiculo">
+<option value="auto">Auto</option>
+<option value="pickup">Pick Up / Camión</option>
+</select>
+</div>
+<div>
+<label>Peso (kg)</label>
+<input id="peso" placeholder="Solo si es carga pesada">
+</div>
 </div>
 
 <div class="card">
@@ -58,8 +72,7 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 
 <script>
 
-// ✅ 83 CANTONES (lista real CR)
-const cantonesCR = {
+const cantonesCR={
 "San José":["Central","Escazú","Desamparados","Puriscal","Tarrazú","Aserrí","Mora","Goicoechea","Santa Ana","Alajuelita","Vásquez de Coronado","Acosta","Tibás","Moravia","Montes de Oca","Turrubares","Dota","Curridabat","Pérez Zeledón","León Cortés"],
 "Alajuela":["Central","San Ramón","Grecia","San Mateo","Atenas","Naranjo","Palmares","Poás","Orotina","San Carlos","Zarcero","Sarchí","Upala","Los Chiles","Guatuso","Río Cuarto"],
 "Cartago":["Central","Paraíso","La Unión","Jiménez","Turrialba","Alvarado","Oreamuno","El Guarco"],
@@ -87,14 +100,12 @@ canton.innerHTML+=`<option value="${c}">${c}</option>`;
 });
 }
 
-// 🔥 AUTOCOMPLETE
-const autocomplete = new google.maps.places.Autocomplete(document.getElementById("direccion"),{
-  componentRestrictions:{country:"cr"}
+const autocomplete=new google.maps.places.Autocomplete(document.getElementById("direccion"),{
+componentRestrictions:{country:"cr"}
 });
 
 function agregar(){
 if(!provincia.value||!canton.value||!direccion.value)return alert('Faltan datos');
-
 let dir=`${provincia.value}, ${canton.value}, ${direccion.value}`;
 direcciones.push(dir);
 render();
@@ -104,7 +115,22 @@ function render(){
 lista.innerHTML=direcciones.map((d,i)=>`<div class='item'>${i+1}. ${d}</div>`).join('');
 }
 
-// 🔥 CÁLCULO REAL
+function calcularTarifa(km){
+let tipo=document.getElementById('vehiculo').value;
+let peso=parseFloat(document.getElementById('peso').value)||0;
+let base=580;
+
+if(tipo==='auto') return km*base;
+
+let extra=0;
+if(peso>50 && peso<=200) extra=100;
+else if(peso>200 && peso<=500) extra=200;
+else if(peso>500 && peso<=1000) extra=400;
+else if(peso>1000) extra=600;
+
+return km*(base+extra);
+}
+
 async function calcular(){
 let inicio=document.getElementById('inicio').value;
 if(!inicio)return alert('Inicio requerido');
@@ -119,7 +145,7 @@ service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travel
 });
 
 let el=res.rows[0].elements[0];
-if(!el||el.status!=="OK"){
+if(!el||el.status!="OK"){
 alert('Error en dirección');
 return;
 }
@@ -128,8 +154,8 @@ let km=el.distance.value/1000;
 total+=km;
 }
 
-let precio=total*580;
-resultadoTXT=`Total KM: ${total.toFixed(2)} | ₡${precio.toFixed(0)}`;
+let precio=calcularTarifa(total);
+resultadoTXT=`KM: ${total.toFixed(2)} | Total: ₡${precio.toFixed(0)}`;
 
 alert(resultadoTXT);
 }
@@ -139,7 +165,7 @@ if(!resultadoTXT)return alert('Calcula primero');
 let blob=new Blob([resultadoTXT]);
 let a=document.createElement('a');
 a.href=URL.createObjectURL(blob);
-a.download='ruta.txt';
+a.download='ruta_axis.txt';
 a.click();
 }
 

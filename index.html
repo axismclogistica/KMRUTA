@@ -93,7 +93,6 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 
 <div class="stats">
 <div class="stat"><small>Distancia</small><h3 id="km"></h3></div>
-<div class="stat"><small>Tarifa x KM</small><h3 id="tarifa"></h3></div>
 <div class="stat"><small>Total</small><h3 id="total"></h3></div>
 </div>
 
@@ -167,7 +166,7 @@ let tkm=tarifaKM();
 let totalFinal=totalKM*tkm;
 
 km.innerText=totalKM.toFixed(2)+" km";
-tarifa.innerText="₡"+tkm;
+//tarifa.innerText="₡"+tkm;
 total.innerText="₡"+totalFinal.toFixed(0);
 detalle.innerHTML=detalleHTML;
 

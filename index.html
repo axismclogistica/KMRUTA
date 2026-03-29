@@ -5,28 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Axis MC Logística PRO</title>
 
+<!-- GOOGLE MAPS (IMPORTANTE: CAMBIÁ TU API KEY) -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8&libraries=places&callback=initMap" async defer></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body{font-family:'Segoe UI',Arial;background:#0b0f14;color:white;margin:0}
-.container{max-width:1100px;margin:auto;padding:25px}
-h1{color:#00e0c2}
-.card{background:#121821;padding:20px;border-radius:18px;margin-top:20px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
-input,select{padding:12px;border-radius:10px;border:none;width:100%;background:#1c2633;color:white}
-button{padding:14px;border:none;border-radius:12px;margin-top:10px}
+body{font-family:Arial;background:#0b0f14;color:white;margin:0}
+.container{max-width:1100px;margin:auto;padding:20px}
+.card{background:#121821;padding:15px;border-radius:15px;margin-top:15px}
+input,select{padding:10px;width:100%;margin-top:5px;background:#1c2633;color:white;border:none;border-radius:8px}
+button{padding:10px;border:none;border-radius:10px;margin-top:10px;cursor:pointer}
 .btn{background:#00e0c2;color:black}
-.item{background:#1c2633;padding:10px;border-radius:8px;margin-bottom:5px}
-
-footer{text-align:center;padding:15px;margin-top:30px;font-size:13px;color:#8fa3b0}
+.item{background:#1c2633;padding:8px;margin:5px 0;border-radius:8px}
+footer{text-align:center;margin-top:20px;color:#888}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-<h1>Axis MC Logística</h1>
+<h2>Axis MC Logística</h2>
 
 <div class="card">
 <label>Cliente</label>
@@ -38,16 +37,14 @@ footer{text-align:center;padding:15px;margin-top:30px;font-size:13px;color:#8fa3
 <input id="inicio">
 </div>
 
-<div class="card grid">
-<input id="peso" placeholder="Peso">
+<div class="card">
+<label>Peso</label>
+<input id="peso">
 </div>
 
 <div class="card">
-<div class="grid">
-<select id="provincia" onchange="loadCantones()"></select>
-<select id="canton"></select>
-<input id="direccion" placeholder="Dirección">
-</div>
+<label>Destino</label>
+<input id="direccion">
 <button class="btn" onclick="agregar()">Agregar</button>
 </div>
 
@@ -55,8 +52,9 @@ footer{text-align:center;padding:15px;margin-top:30px;font-size:13px;color:#8fa3
 <div id="lista"></div>
 <button class="btn" onclick="calcular()">Calcular</button>
 <button class="btn" onclick="generarPDF()">PDF</button>
-<button class="btn" onclick="resetear()">Reiniciar</button>
+<button onclick="resetear()">Reiniciar</button>
 </div>
+
 </div>
 
 <footer>© 2026 Axis MC Logística | Costa Rica</footer>
@@ -66,62 +64,64 @@ footer{text-align:center;padding:15px;margin-top:30px;font-size:13px;color:#8fa3
 let direcciones=[];
 let dataFinal=null;
 
-function initMap(){
-new google.maps.places.Autocomplete(document.getElementById("inicio"),{componentRestrictions:{country:"cr"}});
-new google.maps.places.Autocomplete(document.getElementById("direccion"),{componentRestrictions:{country:"cr"}});
-init();
+// 🔥 FIX GOOGLE MAPS
+window.initMap=function(){
+try{
+new google.maps.places.Autocomplete(document.getElementById("inicio"));
+new google.maps.places.Autocomplete(document.getElementById("direccion"));
+}catch(e){
+console.log("Maps error:",e);
+}
 }
 
-const cantonesCR={
-"San José":["Central","Escazú"],
-"Alajuela":["Central","San Ramón"],
-"Heredia":["Heredia","Barva"]
-};
-
-function init(){
-provincia.innerHTML='<option>Provincia</option>';
-Object.keys(cantonesCR).forEach(p=>provincia.innerHTML+=`<option>${p}</option>`);
-}
-
-function loadCantones(){
-canton.innerHTML='';
-cantonesCR[provincia.value].forEach(c=>canton.innerHTML+=`<option>${c}</option>`);
-}
-
+// AGREGAR
 function agregar(){
-let dir=`${provincia.value}, ${canton.value}, ${direccion.value}`;
-direcciones.push(dir);
+if(!direccion.value) return alert("Escribí una dirección");
+
+direcciones.push(direccion.value);
 renderLista();
+direccion.value="";
 }
 
+// LISTA
 function renderLista(){
 lista.innerHTML=direcciones.map((d,i)=>`
-<div class='item'>
+<div class="item">
 ${d}
-<button onclick="eliminar(${i})">X</button>
-</div>`).join('');
+<button onclick="eliminar(${i})" style="float:right">X</button>
+</div>
+`).join('');
 }
 
+// ELIMINAR
 function eliminar(i){
 direcciones.splice(i,1);
 renderLista();
 }
 
+// RESET
 function resetear(){
 direcciones=[];
+dataFinal=null;
 lista.innerHTML="";
 inicio.value="";
 direccion.value="";
-peso.value="";
 cliente.value="";
+peso.value="";
 }
 
+// TARIFA
 function tarifaKM(){
 let base=580;
 return base;
 }
 
+// CALCULAR (OPTIMIZADO)
 async function calcular(){
+
+if(!inicio.value) return alert("Falta inicio");
+if(direcciones.length===0) return alert("Agregá destinos");
+
 let service=new google.maps.DirectionsService();
 
 let res=await new Promise(resolve=>{
@@ -143,17 +143,18 @@ totalKM+=l.distance.value/1000;
 let totalFinal=totalKM*tarifaKM();
 
 dataFinal={
-cliente: cliente.value,
+cliente: cliente.value || "Cliente",
 totalKM,
 totalFinal,
 puntos: res.routes[0].legs.map(l=>l.start_address)
 };
 
-alert("Total: "+totalFinal.toFixed(0));
+alert("Total: CRC "+totalFinal.toFixed(0));
 }
 
+// PDF
 function generarPDF(){
-if(!dataFinal) return alert("Calcula primero");
+if(!dataFinal) return alert("Calculá primero");
 
 const { jsPDF } = window.jspdf;
 let doc=new jsPDF();

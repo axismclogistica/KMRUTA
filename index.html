@@ -55,6 +55,11 @@ border-top:1px solid #1c2633;
 <input id="inicio">
 </div>
 
+<div class="card">
+<label>Cliente</label>
+<input id="cliente">
+</div>
+
 <div class="card grid">
 <div>
 <label>Vehículo</label>
@@ -91,6 +96,11 @@ border-top:1px solid #1c2633;
 <div id="lista"></div>
 <button class="btn" onclick="calcular()">Calcular</button>
 <button class="btn" onclick="generarPDF()">PDF</button>
+
+<!-- 🔥 NUEVOS BOTONES -->
+<button class="btn" onclick="enviarWhatsApp()">WhatsApp</button>
+<button class="btn" onclick="enviarCorreo()">Correo</button>
+
 <button class="btn" onclick="resetear()" style="background:#ff4d4d;color:white">Reiniciar</button>
 </div>
 </div>
@@ -145,7 +155,6 @@ canton.innerHTML='';
 new google.maps.places.Autocomplete(inicio,{componentRestrictions:{country:"cr"}});
 new google.maps.places.Autocomplete(direccion,{componentRestrictions:{country:"cr"}});
 
-// 🔥 MEJORADO
 function agregar(){
 
 if(!provincia.value || !canton.value || !direccion.value){
@@ -157,7 +166,6 @@ direcciones.push(dir);
 
 renderLista();
 
-// limpiar campo
 direccion.value="";
 }
 
@@ -175,7 +183,6 @@ direcciones.splice(index,1);
 renderLista();
 }
 
-// 🔥 REINICIO REAL
 function resetear(){
 direcciones=[];
 dataFinal=null;
@@ -203,7 +210,6 @@ return base+extra;
 
 async function calcular(){
 
-// 🔥 VALIDACIÓN
 if(!inicio.value) return alert("Falta punto de inicio");
 if(direcciones.length===0) return alert("Agregá al menos un destino");
 
@@ -238,79 +244,46 @@ if(!dataFinal) return alert('Calcula primero');
 const { jsPDF } = window.jspdf;
 let doc=new jsPDF();
 
-const primary = [0,194,168];
-const gray = [120,120,120];
+doc.text("Cotización Axis MC Logística",20,20);
 
-doc.setFillColor(...primary);
-doc.rect(0,0,210,28,'F');
+doc.save("Cotizacion.pdf");
+}
 
-doc.setTextColor(255,255,255);
-doc.setFontSize(16);
-doc.text("AXIS MC LOGISTICA",105,15,null,null,"center");
+// 🔥 NUEVAS FUNCIONES
+function generarTextoEnvio(){
+if(!dataFinal) return null;
 
-doc.setFontSize(9);
-doc.text("Servicios de logistica empresarial",105,22,null,null,"center");
+let cliente = document.getElementById("cliente").value || "Cliente";
+let texto = `Cotización Axis MC Logística\n\n`;
 
-doc.setTextColor(...gray);
-doc.setFontSize(9);
-doc.text("Fecha: "+new Date().toLocaleDateString(),180,35,null,null,"right");
+texto += `Cliente: ${cliente}\n`;
+texto += `Distancia: ${dataFinal.totalKM.toFixed(2)} km\n`;
+texto += `Total: CRC ${dataFinal.totalFinal.toLocaleString("es-CR")}\n\n`;
 
-doc.setTextColor(0,0,0);
-doc.setFontSize(14);
-doc.text("COTIZACION DE SERVICIO",105,45,null,null,"center");
-
-let y=55;
-doc.line(20,y,190,y);
-y+=8;
-
-doc.setFontSize(11);
-doc.text("Detalle de Ruta:",20,y);
-y+=6;
-
-doc.setFillColor(245,245,245);
-doc.rect(20,y,170,(dataFinal.puntos.length*6)+6,'F');
-
-y+=5;
-doc.setFontSize(9);
-
+texto += `Ruta:\n`;
 dataFinal.puntos.forEach((p,i)=>{
-doc.text((i===0?"Inicio: ":"Destino "+i+": "),25,y);
-doc.text(p,60,y);
-y+=6;
+texto += `${i===0 ? "Inicio" : "Destino "+i}: ${p}\n`;
 });
 
-y+=5;
+return texto;
+}
 
-doc.setFillColor(230,255,250);
-doc.rect(20,y,170,25,'F');
+function enviarWhatsApp(){
+let texto = generarTextoEnvio();
+if(!texto) return alert("Calcula primero");
 
-y+=8;
-doc.setFontSize(11);
-doc.setTextColor(0,120,100);
-doc.text("Resumen del servicio",105,y,null,null,"center");
+let url = `https://wa.me/50672494690?text=${encodeURIComponent(texto)}`;
+window.open(url, "_blank");
+}
 
-y+=7;
+function enviarCorreo(){
+let texto = generarTextoEnvio();
+if(!texto) return alert("Calcula primero");
 
-doc.setFontSize(10);
-doc.setTextColor(0,0,0);
-doc.text("Distancia total:",40,y);
-doc.text(dataFinal.totalKM.toFixed(2)+" km",150,y,null,null,"right");
+let subject = "Cotización Axis MC Logística";
+let body = encodeURIComponent(texto);
 
-y+=6;
-
-doc.setFontSize(13);
-doc.setTextColor(0,150,120);
-doc.text("TOTAL:",40,y);
-doc.text("CRC "+dataFinal.totalFinal.toLocaleString("es-CR"),150,y,null,null,"right");
-
-doc.line(20,270,190,270);
-
-doc.setFontSize(9);
-doc.setTextColor(...gray);
-doc.text("Gracias por confiar en AXIS MC Logistica",105,277,null,null,"center");
-doc.text("© 2026 Axis MC Logistica | Costa Rica",105,283,null,null,"center");
-
-doc.save("Cotizacion_Axis_MC_PRO.pdf");
+window.location.href = `mailto:axismclogistica@gmail.com?subject=${subject}&body=${body}`;
 }
 
 init();

@@ -42,6 +42,30 @@ font-size:13px;
 color:#8fa3b0;
 border-top:1px solid #1c2633;
 }
+
+/* FLOATING BOX */
+.floating-box{
+position:fixed;
+bottom:20px;
+right:20px;
+background:#121821;
+padding:15px;
+border-radius:15px;
+box-shadow:0 0 20px rgba(0,224,194,.3);
+width:180px;
+z-index:999;
+}
+.floating-box h4{
+margin:0 0 10px 0;
+font-size:13px;
+color:#00e0c2;
+}
+.floating-box button{
+width:100%;
+margin-bottom:6px;
+background:#00e0c2;
+color:black;
+}
 </style>
 </head>
 
@@ -49,6 +73,12 @@ border-top:1px solid #1c2633;
 
 <div class="container">
 <h1>🚚 Axis MC Logística</h1>
+
+<!-- NUEVO CLIENTE -->
+<div class="card">
+<label>Nombre del Cliente</label>
+<input id="cliente">
+</div>
 
 <div class="card">
 <label>Inicio</label>
@@ -112,9 +142,14 @@ border-top:1px solid #1c2633;
 </div>
 </div>
 
-<footer>
-© 2026 Axis MC Logística | Costa Rica
-</footer>
+<footer> © 2026 Axis MC Logística | Costa Rica </footer>
+
+<!-- FLOAT -->
+<div class="floating-box">
+<h4>Enviar PDF por:</h4>
+<button onclick="enviarWhatsApp()">WhatsApp</button>
+<button onclick="enviarCorreo()">Correo</button>
+</div>
 
 <script>
 
@@ -145,19 +180,13 @@ canton.innerHTML='';
 new google.maps.places.Autocomplete(inicio,{componentRestrictions:{country:"cr"}});
 new google.maps.places.Autocomplete(direccion,{componentRestrictions:{country:"cr"}});
 
-// 🔥 MEJORADO
 function agregar(){
-
 if(!provincia.value || !canton.value || !direccion.value){
 return alert("Completa provincia, cantón y dirección");
 }
-
 let dir=`${provincia.value}, ${canton.value}, ${direccion.value}`;
 direcciones.push(dir);
-
 renderLista();
-
-// limpiar campo
 direccion.value="";
 }
 
@@ -165,7 +194,7 @@ function renderLista(){
 lista.innerHTML=direcciones.map((d,i)=>`
 <div class='item'>
 ${i+1}. ${d}
-<button onclick="eliminar(${i})" title="Eliminar" style="float:right;background:#ff4d4d;color:white;border:none;border-radius:6px;padding:3px 8px;cursor:pointer">X</button>
+<button onclick="eliminar(${i})" style="float:right;background:#ff4d4d;color:white;border:none;border-radius:6px;padding:3px 8px;cursor:pointer">X</button>
 </div>
 `).join('');
 }
@@ -175,18 +204,16 @@ direcciones.splice(index,1);
 renderLista();
 }
 
-// 🔥 REINICIO REAL
 function resetear(){
 direcciones=[];
 dataFinal=null;
-
 lista.innerHTML="";
 inicio.value="";
 direccion.value="";
 peso.value="";
+cliente.value="";
 provincia.value="Seleccione";
 canton.innerHTML="";
-
 modal.style.display='none';
 }
 
@@ -202,8 +229,6 @@ return base+extra;
 }
 
 async function calcular(){
-
-// 🔥 VALIDACIÓN
 if(!inicio.value) return alert("Falta punto de inicio");
 if(direcciones.length===0) return alert("Agregá al menos un destino");
 
@@ -214,7 +239,11 @@ let detalleHTML="";
 
 for(let i=0;i<puntos.length-1;i++){
 let res=await new Promise(r=>{
-service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travelMode:'DRIVING'},d=>r(d));
+service.getDistanceMatrix({
+origins:[puntos[i]],
+destinations:[puntos[i+1]],
+travelMode:'DRIVING'
+},d=>r(d));
 });
 let kmVal=res.rows[0].elements[0].distance.value/1000;
 totalKM+=kmVal;
@@ -238,79 +267,32 @@ if(!dataFinal) return alert('Calcula primero');
 const { jsPDF } = window.jspdf;
 let doc=new jsPDF();
 
-const primary = [0,194,168];
-const gray = [120,120,120];
-
-doc.setFillColor(...primary);
-doc.rect(0,0,210,28,'F');
-
-doc.setTextColor(255,255,255);
-doc.setFontSize(16);
-doc.text("AXIS MC LOGISTICA",105,15,null,null,"center");
-
-doc.setFontSize(9);
-doc.text("Servicios de logistica empresarial",105,22,null,null,"center");
-
-doc.setTextColor(...gray);
-doc.setFontSize(9);
-doc.text("Fecha: "+new Date().toLocaleDateString(),180,35,null,null,"right");
-
-doc.setTextColor(0,0,0);
 doc.setFontSize(14);
 doc.text("COTIZACION DE SERVICIO",105,45,null,null,"center");
 
-let y=55;
-doc.line(20,y,190,y);
-y+=8;
-
-doc.setFontSize(11);
-doc.text("Detalle de Ruta:",20,y);
-y+=6;
-
-doc.setFillColor(245,245,245);
-doc.rect(20,y,170,(dataFinal.puntos.length*6)+6,'F');
-
-y+=5;
-doc.setFontSize(9);
-
-dataFinal.puntos.forEach((p,i)=>{
-doc.text((i===0?"Inicio: ":"Destino "+i+": "),25,y);
-doc.text(p,60,y);
-y+=6;
-});
-
-y+=5;
-
-doc.setFillColor(230,255,250);
-doc.rect(20,y,170,25,'F');
-
-y+=8;
-doc.setFontSize(11);
-doc.setTextColor(0,120,100);
-doc.text("Resumen del servicio",105,y,null,null,"center");
-
-y+=7;
-
+// CLIENTE
 doc.setFontSize(10);
-doc.setTextColor(0,0,0);
-doc.text("Distancia total:",40,y);
-doc.text(dataFinal.totalKM.toFixed(2)+" km",150,y,null,null,"right");
-
-y+=6;
-
-doc.setFontSize(13);
-doc.setTextColor(0,150,120);
-doc.text("TOTAL:",40,y);
-doc.text("CRC "+dataFinal.totalFinal.toLocaleString("es-CR"),150,y,null,null,"right");
-
-doc.line(20,270,190,270);
-
-doc.setFontSize(9);
-doc.setTextColor(...gray);
-doc.text("Gracias por confiar en AXIS MC Logistica",105,277,null,null,"center");
-doc.text("© 2026 Axis MC Logistica | Costa Rica",105,283,null,null,"center");
+doc.text("Cliente: " + (cliente.value || "No especificado"),20,50);
 
 doc.save("Cotizacion_Axis_MC_PRO.pdf");
+}
+
+function enviarWhatsApp(){
+if(!dataFinal) return alert("Primero genera la cotización");
+
+let texto=`Hola, te comparto la cotización 🚚%0ACliente: ${cliente.value || "No especificado"}%0ADistancia: ${dataFinal.totalKM.toFixed(2)} km%0ATotal: CRC ${dataFinal.totalFinal.toLocaleString("es-CR")}`;
+window.open(`https://wa.me/50672494690?text=${texto}`,"_blank");
+}
+
+function enviarCorreo(){
+if(!dataFinal) return alert("Primero genera la cotización");
+
+let asunto="Cotización Axis MC Logística";
+let cuerpo=`Cliente: ${cliente.value || "No especificado"}
+Distancia: ${dataFinal.totalKM.toFixed(2)} km
+Total: CRC ${dataFinal.totalFinal.toLocaleString("es-CR")}`;
+
+window.location.href=`mailto:axismclogistica@gmail.com?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
 }
 
 init();

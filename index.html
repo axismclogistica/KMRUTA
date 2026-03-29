@@ -253,7 +253,7 @@ let tkm=tarifaKM();
 let totalFinal=totalKM*tkm;
 
 km.innerText=totalKM.toFixed(2)+" km";
-total.innerText="CRC "+totalFinal.toFixed(0);
+total.innerText="₡ "+totalFinal.toFixed(0);
 detalle.innerHTML=detalleHTML;
 
 dataFinal={totalKM,tkm,totalFinal,puntos};
@@ -334,7 +334,7 @@ y+=6;
 doc.setFontSize(13);
 doc.setTextColor(0,150,120);
 doc.text("TOTAL:",40,y);
-doc.text("CRC "+dataFinal.totalFinal.toLocaleString("es-CR"),150,y,null,null,"right");
+doc.text("₡ "+dataFinal.totalFinal.toLocaleString("es-CR"),150,y,null,null,"right");
 
 doc.line(20,270,190,270);
 
@@ -349,7 +349,20 @@ doc.save("Cotizacion_Axis_MC_PRO.pdf");
 function enviarWhatsApp(){
 if(!dataFinal) return alert("Primero genera la cotización");
 
-let texto=`Hola, te comparto la cotización 🚚%0ACliente: ${cliente.value || "No especificado"}%0ADistancia: ${dataFinal.totalKM.toFixed(2)} km%0ATotal: CRC ${dataFinal.totalFinal.toLocaleString("es-CR")}`;
+// 🔥 Construir lista de rutas
+let lista = "";
+dataFinal.puntos.forEach((p,i)=>{
+lista += (i===0 ? "📍 Inicio: " : `📦 Destino ${i}: `) + p + "%0A";
+});
+
+// 🔥 Mensaje completo
+let texto = `🚚 *Cotización Axis MC Logística* %0A%0A`
++ `👤 Cliente: ${cliente.value || "No especificado"} %0A`
++ `📏 Distancia: ${dataFinal.totalKM.toFixed(2)} km %0A`
++ `💰 Total: ₡ ${dataFinal.totalFinal.toLocaleString("es-CR")} %0A%0A`
++ `🧭 *Detalle de Ruta:* %0A`
++ lista;
+
 window.open(`https://wa.me/50672494690?text=${texto}`,"_blank");
 }
 

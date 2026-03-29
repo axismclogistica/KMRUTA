@@ -5,50 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Axis MC Logística PRO</title>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8&libraries=places"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8&libraries=places&callback=initMap" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{font-family:'Segoe UI',Arial;background:#0b0f14;color:white;margin:0}
 .container{max-width:1100px;margin:auto;padding:25px}
 h1{color:#00e0c2}
-.card{background:#121821;padding:20px;border-radius:18px;margin-top:20px;box-shadow:0 0 20px rgba(0,224,194,.1)}
+.card{background:#121821;padding:20px;border-radius:18px;margin-top:20px}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
-label{font-size:13px;color:#8fa3b0}
-select,input{padding:12px;border-radius:10px;border:none;width:100%;background:#1c2633;color:white}
-button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:10px}
-.btn{background:linear-gradient(45deg,#00c2a8,#00e0c2);color:black}
+input,select{padding:12px;border-radius:10px;border:none;width:100%;background:#1c2633;color:white}
+button{padding:14px;border:none;border-radius:12px;margin-top:10px}
+.btn{background:#00e0c2;color:black}
 .item{background:#1c2633;padding:10px;border-radius:8px;margin-bottom:5px}
 
-/* MODAL */
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;display:none;background:rgba(0,0,0,.8);justify-content:center;align-items:center}
-.modal-box{background:#121821;padding:25px;border-radius:20px;width:95%;max-width:800px;box-shadow:0 0 60px rgba(0,224,194,.3)}
-.modal-header{display:flex;justify-content:space-between;align-items:center}
-.modal-header h2{color:#00e0c2}
-.close{cursor:pointer;font-size:22px}
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}
-.stat{background:#1c2633;padding:15px;border-radius:12px;text-align:center}
-.stat small{color:#8fa3b0}
-.stat h3{color:#00e0c2;margin:5px 0}
-.detalle{margin-top:15px;max-height:220px;overflow:auto}
-.detalle div{background:#1c2633;padding:10px;border-radius:10px;margin-bottom:8px;font-size:13px}
-
-/* FOOTER */
-footer{
-text-align:center;
-padding:15px;
-margin-top:30px;
-font-size:13px;
-color:#8fa3b0;
-border-top:1px solid #1c2633;
-}
+footer{text-align:center;padding:15px;margin-top:30px;font-size:13px;color:#8fa3b0}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-<h1>🚚 Axis MC Logística</h1>
+<h1>Axis MC Logística</h1>
+
+<div class="card">
+<label>Cliente</label>
+<input id="cliente">
+</div>
 
 <div class="card">
 <label>Inicio</label>
@@ -56,33 +39,14 @@ border-top:1px solid #1c2633;
 </div>
 
 <div class="card grid">
-<div>
-<label>Vehículo</label>
-<select id="vehiculo">
-<option value="auto">Auto</option>
-<option value="pickup">Pickup / Camión</option>
-</select>
-</div>
-<div>
-<label>Peso</label>
-<input id="peso">
-</div>
+<input id="peso" placeholder="Peso">
 </div>
 
 <div class="card">
 <div class="grid">
-<div>
-<label>Provincia</label>
 <select id="provincia" onchange="loadCantones()"></select>
-</div>
-<div>
-<label>Cantón</label>
 <select id="canton"></select>
-</div>
-<div>
-<label>Dirección</label>
-<input id="direccion">
-</div>
+<input id="direccion" placeholder="Dirección">
 </div>
 <button class="btn" onclick="agregar()">Agregar</button>
 </div>
@@ -91,59 +55,38 @@ border-top:1px solid #1c2633;
 <div id="lista"></div>
 <button class="btn" onclick="calcular()">Calcular</button>
 <button class="btn" onclick="generarPDF()">PDF</button>
-<button class="btn" onclick="resetear()" style="background:#ff4d4d;color:white">Reiniciar</button>
+<button class="btn" onclick="resetear()">Reiniciar</button>
 </div>
 </div>
 
-<!-- MODAL -->
-<div class="modal" id="modal">
-<div class="modal-box">
-<div class="modal-header">
-<h2>Cotización</h2>
-<span class="close" onclick="modal.style.display='none'">✖</span>
-</div>
-
-<div class="stats">
-<div class="stat"><small>Distancia</small><h3 id="km"></h3></div>
-<div class="stat"><small>Total</small><h3 id="total"></h3></div>
-</div>
-
-<div class="detalle" id="detalle"></div>
-</div>
-</div>
-
-<footer>
-© 2026 Axis MC Logística | Costa Rica
-</footer>
+<footer>© 2026 Axis MC Logística | Costa Rica</footer>
 
 <script>
-
-const cantonesCR={
-"San José":["Central","Escazú","Desamparados","Puriscal","Tarrazú","Aserrí","Mora","Goicoechea","Santa Ana","Alajuelita","Vásquez de Coronado","Acosta","Tibás","Moravia","Montes de Oca","Turrubares","Dota","Curridabat","Pérez Zeledón","León Cortés"],
-"Alajuela":["Central","San Ramón","Grecia","San Mateo","Atenas","Naranjo","Palmares","Poás","Orotina","San Carlos","Zarcero","Sarchí","Upala","Los Chiles","Guatuso","Río Cuarto"],
-"Cartago":["Central","Paraíso","La Unión","Jiménez","Turrialba","Alvarado","Oreamuno","El Guarco"],
-"Heredia":["Heredia","Barva","Santo Domingo","Santa Bárbara","San Rafael","San Isidro","Belén","Flores","San Pablo","Sarapiquí"],
-"Guanacaste":["Liberia","Nicoya","Santa Cruz","Bagaces","Carrillo","Cañas","Abangares","Tilarán","Nandayure","La Cruz","Hojancha"],
-"Puntarenas":["Puntarenas","Esparza","Buenos Aires","Montes de Oro","Osa","Quepos","Golfito","Coto Brus","Parrita","Corredores","Garabito"],
-"Limón":["Limón","Pococí","Siquirres","Talamanca","Matina","Guácimo"]
-};
 
 let direcciones=[];
 let dataFinal=null;
 
+function initMap(){
+new google.maps.places.Autocomplete(document.getElementById("inicio"),{componentRestrictions:{country:"cr"}});
+new google.maps.places.Autocomplete(document.getElementById("direccion"),{componentRestrictions:{country:"cr"}});
+init();
+}
+
+const cantonesCR={
+"San José":["Central","Escazú"],
+"Alajuela":["Central","San Ramón"],
+"Heredia":["Heredia","Barva"]
+};
+
 function init(){
-provincia.innerHTML='<option>Seleccione</option>';
+provincia.innerHTML='<option>Provincia</option>';
 Object.keys(cantonesCR).forEach(p=>provincia.innerHTML+=`<option>${p}</option>`);
 }
 
 function loadCantones(){
-let p=provincia.value;
 canton.innerHTML='';
-(cantonesCR[p]||[]).forEach(c=>canton.innerHTML+=`<option>${c}</option>`);
+cantonesCR[provincia.value].forEach(c=>canton.innerHTML+=`<option>${c}</option>`);
 }
-
-new google.maps.places.Autocomplete(inicio,{componentRestrictions:{country:"cr"}});
-new google.maps.places.Autocomplete(direccion,{componentRestrictions:{country:"cr"}});
 
 function agregar(){
 let dir=`${provincia.value}, ${canton.value}, ${direccion.value}`;
@@ -154,169 +97,80 @@ renderLista();
 function renderLista(){
 lista.innerHTML=direcciones.map((d,i)=>`
 <div class='item'>
-${i+1}. ${d}
-<button onclick="eliminar(${i})" style="float:right;background:#ff4d4d;color:white;border:none;border-radius:6px;padding:3px 8px;cursor:pointer">X</button>
-</div>
-`).join('');
+${d}
+<button onclick="eliminar(${i})">X</button>
+</div>`).join('');
 }
 
-function eliminar(index){
-direcciones.splice(index,1);
+function eliminar(i){
+direcciones.splice(i,1);
 renderLista();
 }
 
 function resetear(){
 direcciones=[];
-dataFinal=null;
 lista.innerHTML="";
 inicio.value="";
 direccion.value="";
 peso.value="";
-modal.style.display='none';
+cliente.value="";
 }
 
 function tarifaKM(){
 let base=580;
-let pesoVal=parseFloat(peso.value)||0;
-let extra=0;
-if(pesoVal>50 && pesoVal<=200) extra=2920;
-else if(pesoVal>200 && pesoVal<=500) extra=3420;
-else if(pesoVal>500 && pesoVal<=1000) extra=4020;
-else if(pesoVal>1000) extra=5020;
-return base+extra;
+return base;
 }
 
-// 🔥 CALCULO CON RUTA OPTIMIZADA
 async function calcular(){
+let service=new google.maps.DirectionsService();
 
-let origen = inicio.value;
-let destinos = direcciones;
-
-if(destinos.length === 0) return alert("Agregá destinos");
-
-let service = new google.maps.DirectionsService();
-
-let res = await new Promise(resolve=>{
+let res=await new Promise(resolve=>{
 service.route({
-origin: origen,
-destination: destinos[destinos.length-1],
-waypoints: destinos.slice(0,-1).map(d=>({location:d, stopover:true})),
-optimizeWaypoints: true,
-travelMode: 'DRIVING'
-}, resolve);
+origin: inicio.value,
+destination: direcciones[direcciones.length-1],
+waypoints: direcciones.slice(0,-1).map(d=>({location:d,stopover:true})),
+optimizeWaypoints:true,
+travelMode:'DRIVING'
+},resolve);
 });
 
-let ruta = res.routes[0];
+let totalKM=0;
 
-let totalKM = 0;
-let detalleHTML = "";
-
-ruta.legs.forEach((leg,i)=>{
-let kmVal = leg.distance.value / 1000;
-totalKM += kmVal;
-detalleHTML += `<div>Tramo ${i+1}: ${kmVal.toFixed(2)} km</div>`;
+res.routes[0].legs.forEach(l=>{
+totalKM+=l.distance.value/1000;
 });
 
-let tkm = tarifaKM();
-let totalFinal = totalKM * tkm;
+let totalFinal=totalKM*tarifaKM();
 
-km.innerText = totalKM.toFixed(2)+" km";
-total.innerText = "CRC "+totalFinal.toFixed(0);
-detalle.innerHTML = detalleHTML;
-
-dataFinal = {
+dataFinal={
+cliente: cliente.value,
 totalKM,
-tkm,
 totalFinal,
-puntos: ruta.legs.map(l=>l.start_address).concat(ruta.legs[ruta.legs.length-1].end_address)
+puntos: res.routes[0].legs.map(l=>l.start_address)
 };
 
-modal.style.display='flex';
+alert("Total: "+totalFinal.toFixed(0));
 }
 
-// PDF
 function generarPDF(){
-if(!dataFinal) return alert('Calcula primero');
+if(!dataFinal) return alert("Calcula primero");
 
 const { jsPDF } = window.jspdf;
 let doc=new jsPDF();
 
-const primary = [0,194,168];
-const gray = [120,120,120];
-
-doc.setFillColor(...primary);
-doc.rect(0,0,210,28,'F');
-
-doc.setTextColor(255,255,255);
 doc.setFontSize(16);
 doc.text("AXIS MC LOGISTICA",105,15,null,null,"center");
 
-doc.setFontSize(9);
-doc.text("Servicios de logistica empresarial",105,22,null,null,"center");
-
-doc.setTextColor(...gray);
-doc.setFontSize(9);
-doc.text("Fecha: "+new Date().toLocaleDateString(),180,35,null,null,"right");
-
-doc.setTextColor(0,0,0);
-doc.setFontSize(14);
-doc.text("COMPROBANTE DE SERVICIO",105,45,null,null,"center");
-
-let y=55;
-doc.line(20,y,190,y);
-y+=8;
-
-doc.setFontSize(11);
-doc.text("Detalle de Ruta:",20,y);
-y+=6;
-
-doc.setFillColor(245,245,245);
-doc.rect(20,y,170,(dataFinal.puntos.length*6)+6,'F');
-
-y+=5;
-doc.setFontSize(9);
-
-dataFinal.puntos.forEach((p,i)=>{
-doc.text((i===0?"Inicio: ":"Destino "+i+": "),25,y);
-doc.text(p,60,y);
-y+=6;
-});
-
-y+=5;
-
-doc.setFillColor(230,255,250);
-doc.rect(20,y,170,25,'F');
-
-y+=8;
-doc.setFontSize(11);
-doc.setTextColor(0,120,100);
-doc.text("Resumen del servicio",105,y,null,null,"center");
-
-y+=7;
-
 doc.setFontSize(10);
-doc.setTextColor(0,0,0);
-doc.text("Distancia total:",40,y);
-doc.text(dataFinal.totalKM.toFixed(2)+" km",150,y,null,null,"right");
+doc.text("Cliente: "+dataFinal.cliente,20,30);
+doc.text("Fecha: "+new Date().toLocaleDateString(),20,36);
 
-y+=6;
+doc.text("Distancia: "+dataFinal.totalKM.toFixed(2)+" km",20,50);
+doc.text("Total: CRC "+dataFinal.totalFinal.toFixed(0),20,56);
 
-doc.setFontSize(13);
-doc.setTextColor(0,150,120);
-doc.text("TOTAL:",40,y);
-doc.text("CRC "+dataFinal.totalFinal.toLocaleString("es-CR"),150,y,null,null,"right");
-
-doc.line(20,270,190,270);
-
-doc.setFontSize(9);
-doc.setTextColor(...gray);
-doc.text("Gracias por confiar en AXIS MC Logistica",105,277,null,null,"center");
-doc.text("© 2026 Axis MC Logistica | Costa Rica",105,283,null,null,"center");
-
-doc.save("Cotizacion_Axis_MC_PRO.pdf");
+doc.save("Cotizacion.pdf");
 }
 
-init();
 </script>
 
 </body>

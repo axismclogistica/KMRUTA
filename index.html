@@ -146,9 +146,8 @@ color:black;
 
 <!-- FLOAT -->
 <div class="floating-box">
-<h4>Enviar PDF por:</h4>
+<h4>Enviar Cotizacion (Descargar PDF y enviar)por:</h4>
 <button onclick="enviarWhatsApp()">WhatsApp</button>
-<button onclick="enviarCorreo()">Correo</button>
 </div>
 
 <script>
@@ -352,17 +351,6 @@ if(!dataFinal) return alert("Primero genera la cotización");
 
 let texto=`Hola, te comparto la cotización 🚚%0ACliente: ${cliente.value || "No especificado"}%0ADistancia: ${dataFinal.totalKM.toFixed(2)} km%0ATotal: CRC ${dataFinal.totalFinal.toLocaleString("es-CR")}`;
 window.open(`https://wa.me/50672494690?text=${texto}`,"_blank");
-}
-
-function enviarCorreo(){
-if(!dataFinal) return alert("Primero genera la cotización");
-
-let asunto="Cotización Axis MC Logística";
-let cuerpo=`Cliente: ${cliente.value || "No especificado"}
-Distancia: ${dataFinal.totalKM.toFixed(2)} km
-Total: CRC ${dataFinal.totalFinal.toLocaleString("es-CR")}`;
-
-window.location.href=`mailto:axismclogistica@gmail.com?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
 }
 
 init();

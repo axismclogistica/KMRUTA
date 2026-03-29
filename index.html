@@ -204,29 +204,32 @@ doc.rect(0,0,210,28,'F');
 
 doc.setTextColor(255,255,255);
 doc.setFontSize(16);
-doc.text("🚚 AXIS MC LOGÍSTICA",105,15,null,null,"center");
+doc.text("AXIS MC LOGISTICA",105,15,null,null,"center");
 
 doc.setFontSize(9);
-doc.text("Servicios de logística empresarial",105,22,null,null,"center");
+doc.text("Servicios de logistica empresarial",105,22,null,null,"center");
 
 // FECHA
 doc.setTextColor(...gray);
 doc.setFontSize(9);
-doc.text("📅 Fecha: "+new Date().toLocaleDateString(),180,35,null,null,"right");
+doc.text("Fecha: "+new Date().toLocaleDateString(),180,35,null,null,"right");
 
 // TITULO
 doc.setTextColor(0,0,0);
 doc.setFontSize(14);
 doc.text("COMPROBANTE DE SERVICIO",105,45,null,null,"center");
 
-// RUTA
+// LINEA
 let y=55;
 doc.line(20,y,190,y);
-y+=8;
 
-doc.text("📍 Detalle de Ruta",20,y);
+y+=8;
+doc.setFontSize(11);
+doc.text("Detalle de Ruta:",20,y);
+
 y+=6;
 
+// CAJA RUTA
 doc.setFillColor(245,245,245);
 doc.rect(20,y,170,(dataFinal.puntos.length*6)+6,'F');
 
@@ -248,12 +251,12 @@ doc.rect(20,y,170,25,'F');
 y+=8;
 doc.setFontSize(11);
 doc.setTextColor(0,120,100);
-doc.text("📊 Resumen del servicio",105,y,null,null,"center");
+doc.text("Resumen del servicio",105,y,null,null,"center");
 
 y+=7;
+
 doc.setFontSize(10);
 doc.setTextColor(0,0,0);
-
 doc.text("Distancia total:",40,y);
 doc.text(dataFinal.totalKM.toFixed(2)+" km",150,y,null,null,"right");
 
@@ -262,19 +265,18 @@ y+=6;
 doc.setFontSize(13);
 doc.setTextColor(0,150,120);
 doc.text("TOTAL:",40,y);
-doc.text("₡"+dataFinal.totalFinal.toLocaleString("es-CR"),150,y,null,null,"right");
+doc.text("CRC "+dataFinal.totalFinal.toLocaleString("es-CR"),150,y,null,null,"right");
 
 // FOOTER
 doc.line(20,270,190,270);
 
 doc.setFontSize(9);
 doc.setTextColor(...gray);
-doc.text("Gracias por confiar en AXIS MC Logística 🚚",105,277,null,null,"center");
-doc.text("© 2026 Axis MC Logística | Costa Rica",105,283,null,null,"center");
+doc.text("Gracias por confiar en AXIS MC Logistica",105,277,null,null,"center");
+doc.text("© 2026 Axis MC Logistica | Costa Rica",105,283,null,null,"center");
 
 doc.save("Cotizacion_Axis_MC_PRO.pdf");
 }
-
 init();
 </script>
 

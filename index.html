@@ -51,7 +51,7 @@ border-top:1px solid #1c2633;
 <h1>🚚 Axis MC Logística</h1>
 
 <div class="card">
-<label>📍 Inicio</label>
+<label>Inicio</label>
 <input id="inicio">
 </div>
 
@@ -84,13 +84,14 @@ border-top:1px solid #1c2633;
 <input id="direccion">
 </div>
 </div>
-<button class="btn" onclick="agregar()">➕ Agregar</button>
+<button class="btn" onclick="agregar()">Agregar</button>
 </div>
 
 <div class="card">
 <div id="lista"></div>
-<button class="btn" onclick="calcular()">📊 Calcular</button>
-<button class="btn" onclick="generarPDF()">📄 PDF</button>
+<button class="btn" onclick="calcular()">Calcular</button>
+<button class="btn" onclick="generarPDF()">PDF</button>
+<button class="btn" onclick="resetear()" style="background:#ff4d4d;color:white">Reiniciar</button>
 </div>
 </div>
 
@@ -98,7 +99,7 @@ border-top:1px solid #1c2633;
 <div class="modal" id="modal">
 <div class="modal-box">
 <div class="modal-header">
-<h2>📊 Cotización</h2>
+<h2>Cotización</h2>
 <span class="close" onclick="modal.style.display='none'">✖</span>
 </div>
 
@@ -117,7 +118,6 @@ border-top:1px solid #1c2633;
 
 <script>
 
-// DATOS
 const cantonesCR={
 "San José":["Central","Escazú","Desamparados","Puriscal","Tarrazú","Aserrí","Mora","Goicoechea","Santa Ana","Alajuelita","Vásquez de Coronado","Acosta","Tibás","Moravia","Montes de Oca","Turrubares","Dota","Curridabat","Pérez Zeledón","León Cortés"],
 "Alajuela":["Central","San Ramón","Grecia","San Mateo","Atenas","Naranjo","Palmares","Poás","Orotina","San Carlos","Zarcero","Sarchí","Upala","Los Chiles","Guatuso","Río Cuarto"],
@@ -148,12 +148,36 @@ new google.maps.places.Autocomplete(direccion,{componentRestrictions:{country:"c
 function agregar(){
 let dir=`${provincia.value}, ${canton.value}, ${direccion.value}`;
 direcciones.push(dir);
-lista.innerHTML=direcciones.map((d,i)=>`<div class='item'>${i+1}. ${d}</div>`).join('');
+renderLista();
+}
+
+function renderLista(){
+lista.innerHTML=direcciones.map((d,i)=>`
+<div class='item'>
+${i+1}. ${d}
+<button onclick="eliminar(${i})" style="float:right;background:#ff4d4d;color:white;border:none;border-radius:6px;padding:3px 8px;cursor:pointer">X</button>
+</div>
+`).join('');
+}
+
+function eliminar(index){
+direcciones.splice(index,1);
+renderLista();
+}
+
+function resetear(){
+direcciones=[];
+dataFinal=null;
+lista.innerHTML="";
+inicio.value="";
+direccion.value="";
+peso.value="";
+modal.style.display='none';
 }
 
 function tarifaKM(){
 let base=580;
-let pesoVal=parseFloat(document.getElementById('peso').value)||0;
+let pesoVal=parseFloat(peso.value)||0;
 let extra=0;
 if(pesoVal>50 && pesoVal<=200) extra=2920;
 else if(pesoVal>200 && pesoVal<=500) extra=3420;
@@ -174,21 +198,20 @@ service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travel
 });
 let kmVal=res.rows[0].elements[0].distance.value/1000;
 totalKM+=kmVal;
-detalleHTML+=`<div>🚚 Tramo ${i+1}: ${kmVal.toFixed(2)} km</div>`;
+detalleHTML+=`<div>Tramo ${i+1}: ${kmVal.toFixed(2)} km</div>`;
 }
 
 let tkm=tarifaKM();
 let totalFinal=totalKM*tkm;
 
 km.innerText=totalKM.toFixed(2)+" km";
-total.innerText="₡"+totalFinal.toFixed(0);
+total.innerText="CRC "+totalFinal.toFixed(0);
 detalle.innerHTML=detalleHTML;
 
 dataFinal={totalKM,tkm,totalFinal,puntos};
 modal.style.display='flex';
 }
 
-// PDF PRO
 function generarPDF(){
 if(!dataFinal) return alert('Calcula primero');
 
@@ -198,7 +221,6 @@ let doc=new jsPDF();
 const primary = [0,194,168];
 const gray = [120,120,120];
 
-// HEADER
 doc.setFillColor(...primary);
 doc.rect(0,0,210,28,'F');
 
@@ -209,27 +231,22 @@ doc.text("AXIS MC LOGISTICA",105,15,null,null,"center");
 doc.setFontSize(9);
 doc.text("Servicios de logistica empresarial",105,22,null,null,"center");
 
-// FECHA
 doc.setTextColor(...gray);
 doc.setFontSize(9);
 doc.text("Fecha: "+new Date().toLocaleDateString(),180,35,null,null,"right");
 
-// TITULO
 doc.setTextColor(0,0,0);
 doc.setFontSize(14);
 doc.text("COMPROBANTE DE SERVICIO",105,45,null,null,"center");
 
-// LINEA
 let y=55;
 doc.line(20,y,190,y);
-
 y+=8;
+
 doc.setFontSize(11);
 doc.text("Detalle de Ruta:",20,y);
-
 y+=6;
 
-// CAJA RUTA
 doc.setFillColor(245,245,245);
 doc.rect(20,y,170,(dataFinal.puntos.length*6)+6,'F');
 
@@ -244,7 +261,6 @@ y+=6;
 
 y+=5;
 
-// RESUMEN
 doc.setFillColor(230,255,250);
 doc.rect(20,y,170,25,'F');
 
@@ -267,7 +283,6 @@ doc.setTextColor(0,150,120);
 doc.text("TOTAL:",40,y);
 doc.text("CRC "+dataFinal.totalFinal.toLocaleString("es-CR"),150,y,null,null,"right");
 
-// FOOTER
 doc.line(20,270,190,270);
 
 doc.setFontSize(9);
@@ -277,6 +292,7 @@ doc.text("© 2026 Axis MC Logistica | Costa Rica",105,283,null,null,"center");
 
 doc.save("Cotizacion_Axis_MC_PRO.pdf");
 }
+
 init();
 </script>
 

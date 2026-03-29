@@ -186,32 +186,55 @@ else if(pesoVal>1000) extra=5020;
 return base+extra;
 }
 
+// 🔥 CALCULO CON RUTA OPTIMIZADA
 async function calcular(){
-let puntos=[inicio.value,...direcciones];
-let service=new google.maps.DistanceMatrixService();
-let totalKM=0;
-let detalleHTML="";
 
-for(let i=0;i<puntos.length-1;i++){
-let res=await new Promise(r=>{
-service.getDistanceMatrix({origins:[puntos[i]],destinations:[puntos[i+1]],travelMode:'DRIVING'},d=>r(d));
+let origen = inicio.value;
+let destinos = direcciones;
+
+if(destinos.length === 0) return alert("Agregá destinos");
+
+let service = new google.maps.DirectionsService();
+
+let res = await new Promise(resolve=>{
+service.route({
+origin: origen,
+destination: destinos[destinos.length-1],
+waypoints: destinos.slice(0,-1).map(d=>({location:d, stopover:true})),
+optimizeWaypoints: true,
+travelMode: 'DRIVING'
+}, resolve);
 });
-let kmVal=res.rows[0].elements[0].distance.value/1000;
-totalKM+=kmVal;
-detalleHTML+=`<div>Tramo ${i+1}: ${kmVal.toFixed(2)} km</div>`;
-}
 
-let tkm=tarifaKM();
-let totalFinal=totalKM*tkm;
+let ruta = res.routes[0];
 
-km.innerText=totalKM.toFixed(2)+" km";
-total.innerText="CRC "+totalFinal.toFixed(0);
-detalle.innerHTML=detalleHTML;
+let totalKM = 0;
+let detalleHTML = "";
 
-dataFinal={totalKM,tkm,totalFinal,puntos};
+ruta.legs.forEach((leg,i)=>{
+let kmVal = leg.distance.value / 1000;
+totalKM += kmVal;
+detalleHTML += `<div>Tramo ${i+1}: ${kmVal.toFixed(2)} km</div>`;
+});
+
+let tkm = tarifaKM();
+let totalFinal = totalKM * tkm;
+
+km.innerText = totalKM.toFixed(2)+" km";
+total.innerText = "CRC "+totalFinal.toFixed(0);
+detalle.innerHTML = detalleHTML;
+
+dataFinal = {
+totalKM,
+tkm,
+totalFinal,
+puntos: ruta.legs.map(l=>l.start_address).concat(ruta.legs[ruta.legs.length-1].end_address)
+};
+
 modal.style.display='flex';
 }
 
+// PDF
 function generarPDF(){
 if(!dataFinal) return alert('Calcula primero');
 

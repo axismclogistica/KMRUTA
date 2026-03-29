@@ -322,19 +322,19 @@ doc.setFontSize(11);
 doc.setTextColor(0,120,100);
 doc.text("Resumen del servicio",105,y,null,null,"center");
 
-y+=7;
+y+=5;
 
 doc.setFontSize(10);
 doc.setTextColor(0,0,0);
-doc.text("Distancia total:",40,y);
-doc.text(dataFinal.totalKM.toFixed(2)+" km",150,y,null,null,"right");
+doc.text("Distancia total:",50,y);
+doc.text(dataFinal.totalKM.toFixed(2)+" km",140,y,null,null,"right");
 
-y+=6;
+y+=5;
 
 doc.setFontSize(13);
 doc.setTextColor(0,150,120);
-doc.text("TOTAL:",40,y);
-doc.text("₡ "+dataFinal.totalFinal.toLocaleString("es-CR"),150,y,null,null,"right");
+doc.text("TOTAL:",50,y);
+doc.text("₡ "+dataFinal.totalFinal.toLocaleString("es-CR"),140,y,null,null,"right");
 
 doc.line(20,270,190,270);
 

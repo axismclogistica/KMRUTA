@@ -225,7 +225,7 @@ function tarifaKM(){
   if(vehiculo === "auto"){
     base = 730;
   } else if(vehiculo === "pickup"){
-    base = 2780; // podés ajustar (2500–3500 recomendado)
+    base = 1780; // podés ajustar (2500–3500 recomendado)
   }
 
   let pesoVal = parseFloat(peso.value) || 0;
@@ -233,10 +233,10 @@ function tarifaKM(){
 
   // 🔥 SOLO aplicar extra si es pickup/camión
   if(vehiculo === "pickup"){
-    if(pesoVal > 50 && pesoVal <= 200) extra = 2920;
-    else if(pesoVal > 200 && pesoVal <= 500) extra = 3520;
-    else if(pesoVal > 500 && pesoVal <= 1000) extra = 4520;
-    else if(pesoVal > 1000) extra = 5720;
+    if(pesoVal > 50 && pesoVal <= 200) extra = 2320;
+    else if(pesoVal > 200 && pesoVal <= 500) extra = 3020;
+    else if(pesoVal > 500 && pesoVal <= 1000) extra = 4020;
+    else if(pesoVal > 1000) extra = 5220;
   }
 
   return base + extra;

@@ -233,10 +233,10 @@ function tarifaKM(){
 
   // 🔥 SOLO aplicar extra si es pickup/camión
   if(vehiculo === "pickup"){
-    if(pesoVal > 50 && pesoVal <= 200) extra = 2320;
+    if(pesoVal > 50 && pesoVal <= 200) extra = 2020;
     else if(pesoVal > 200 && pesoVal <= 500) extra = 3020;
     else if(pesoVal > 500 && pesoVal <= 1000) extra = 4020;
-    else if(pesoVal > 1000) extra = 5220;
+    else if(pesoVal > 1000) extra = 5020;
   }
 
   return base + extra;

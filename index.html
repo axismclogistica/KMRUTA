@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Axis MC Logística PRO</title>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8&libraries=places"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8&libraries=places"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
@@ -34,38 +34,16 @@ button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:point
 .detalle div{background:#1c2633;padding:10px;border-radius:10px;margin-bottom:8px;font-size:13px}
 
 /* FOOTER */
-footer{
-text-align:center;
-padding:15px;
-margin-top:30px;
-font-size:13px;
-color:#8fa3b0;
-border-top:1px solid #1c2633;
-}
+footer{text-align:center;padding:15px;margin-top:30px;color:#8fa3b0;border-top:1px solid #1c2633;}
 
-/* FLOATING BOX */
+/* FLOAT */
 .floating-box{
-position:fixed;
-bottom:20px;
-right:20px;
-background:#121821;
-padding:15px;
-border-radius:15px;
-box-shadow:0 0 20px rgba(0,224,194,.3);
-width:180px;
-z-index:999;
+position:fixed;bottom:20px;right:20px;background:#121821;
+padding:15px;border-radius:15px;box-shadow:0 0 20px rgba(0,224,194,.3);
+width:180px;z-index:999;
 }
-.floating-box h4{
-margin:0 0 10px 0;
-font-size:13px;
-color:#00e0c2;
-}
-.floating-box button{
-width:100%;
-margin-bottom:6px;
-background:#00e0c2;
-color:black;
-}
+.floating-box h4{margin:0 0 10px 0;font-size:13px;color:#00e0c2;}
+.floating-box button{width:100%;margin-bottom:6px;background:#00e0c2;color:black;}
 </style>
 </head>
 
@@ -149,7 +127,6 @@ color:black;
 
 <script>
 
-// ===== DATOS =====
 const cantonesCR = {
 "San José":["Central","Escazú","Desamparados","Puriscal","Tarrazú","Aserrí","Mora","Goicoechea","Santa Ana","Alajuelita","Vásquez de Coronado","Acosta","Tibás","Moravia","Montes de Oca","Turrubares","Dota","Curridabat","Pérez Zeledón","León Cortés"],
 "Alajuela":["Central","San Ramón","Grecia","San Mateo","Atenas","Naranjo","Palmares","Poás","Orotina","San Carlos","Zarcero","Sarchí","Upala","Los Chiles","Guatuso","Río Cuarto"],
@@ -174,15 +151,48 @@ canton.innerHTML='';
 (cantonesCR[p]||[]).forEach(c=>canton.innerHTML+=`<option>${c}</option>`);
 }
 
+setTimeout(()=>{
 new google.maps.places.Autocomplete(inicio,{componentRestrictions:{country:"cr"}});
 new google.maps.places.Autocomplete(direccion,{componentRestrictions:{country:"cr"}});
+},1000);
 
-// 🔥 NUEVA TARIFA POR KM
+function agregar(){
+if(!provincia.value || !canton.value || !direccion.value){
+return alert("Completa provincia, cantón y dirección");
+}
+let dir=`${provincia.value}, ${canton.value}, ${direccion.value}`;
+direcciones.push(dir);
+renderLista();
+direccion.value="";
+}
+
+function renderLista(){
+lista.innerHTML=direcciones.map((d,i)=>`
+<div class='item'>
+${i+1}. ${d}
+<button onclick="eliminar(${i})" style="float:right;background:#ff4d4d;color:white;border:none;border-radius:6px;padding:3px 8px;cursor:pointer">X</button>
+</div>
+`).join('');
+}
+
+function eliminar(index){
+direcciones.splice(index,1);
+renderLista();
+}
+
+function resetear(){
+direcciones=[];dataFinal=null;lista.innerHTML="";
+inicio.value="";direccion.value="";peso.value="";cliente.value="";
+provincia.value="Seleccione";canton.innerHTML="";
+modal.style.display='none';
+}
+
+// 🔥 NUEVO CALCULO
 function tarifaKM(totalKM){
-if(totalKM <= 25) return 10000;
-else if(totalKM <= 50) return 8500;
-else if(totalKM <= 75) return 6500;
-else return 5500;
+if(totalKM <= 25) return 14500;
+else if(totalKM <= 50) return 12500;
+else if(totalKM <= 75) return 10500;
+else return 9500;
 }
 
 async function calcular(){
@@ -208,18 +218,17 @@ totalKM+=kmVal;
 detalleHTML+=`<div>Tramo ${i+1}: ${kmVal.toFixed(2)} km</div>`;
 }
 
-let tkm = tarifaKM(totalKM);
-let totalFinal = totalKM * tkm;
+let tkm=tarifaKM(totalKM);
+let totalFinal=totalKM*tkm;
 
-// 🔥 FACTOR POR PESO
-let pesoVal = parseFloat(peso.value) || 0;
-let factor = 1;
+// 🔥 PESO
+let pesoVal=parseFloat(peso.value)||0;
+let factor=1;
+if(pesoVal>200 && pesoVal<=500) factor=1.15;
+else if(pesoVal>500 && pesoVal<=1000) factor=1.30;
+else if(pesoVal>1000) factor=1.50;
 
-if(pesoVal > 200 && pesoVal <= 500) factor = 1.15;
-else if(pesoVal > 500 && pesoVal <= 1000) factor = 1.30;
-else if(pesoVal > 1000) factor = 1.50;
-
-totalFinal *= factor;
+totalFinal*=factor;
 
 km.innerText=totalKM.toFixed(2)+" km";
 total.innerText="₡ "+totalFinal.toFixed(0);
@@ -227,6 +236,23 @@ detalle.innerHTML=detalleHTML;
 
 dataFinal={totalKM,tkm,totalFinal,puntos};
 modal.style.display='flex';
+}
+
+function enviarWhatsApp(){
+if(!dataFinal) return alert("Primero calcula");
+
+let lista="";
+dataFinal.puntos.forEach((p,i)=>{
+lista+=(i===0?"📍 Inicio: ":"📦 Destino "+i+": ")+p+"%0A";
+});
+
+let texto=`🚚 Cotización Axis MC Logística %0A%0A`
++`Cliente: ${cliente.value || "No especificado"} %0A`
++`Distancia: ${dataFinal.totalKM.toFixed(2)} km %0A`
++`Total: ₡ ${dataFinal.totalFinal.toLocaleString("es-CR")} %0A%0A`
++lista;
+
+window.open(`https://wa.me/50672494690?text=${texto}`);
 }
 
 init();

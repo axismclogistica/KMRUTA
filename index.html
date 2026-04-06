@@ -6,57 +6,18 @@
 <title>Axis MC Logística PRO</title>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2eeq7ZcxLlWmfgZNZSNWZzmmLcV8_n8&libraries=places"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{font-family:'Segoe UI',Arial;background:#0b0f14;color:white;margin:0}
 .container{max-width:1100px;margin:auto;padding:25px}
 h1{color:#00e0c2}
-.card{background:#121821;padding:20px;border-radius:18px;margin-top:20px;box-shadow:0 0 20px rgba(0,224,194,.1)}
+.card{background:#121821;padding:20px;border-radius:18px;margin-top:20px}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
-label{font-size:13px;color:#8fa3b0}
 select,input{padding:12px;border-radius:10px;border:none;width:100%;background:#1c2633;color:white}
-button{padding:14px;border:none;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:10px}
-.btn{background:linear-gradient(45deg,#00c2a8,#00e0c2);color:black}
-.item{background:#1c2633;padding:10px;border-radius:8px;margin-bottom:5px}
-
-/* MODAL */
+button{padding:14px;border:none;border-radius:12px;margin-top:10px}
+.btn{background:#00e0c2;color:black}
 .modal{position:fixed;top:0;left:0;width:100%;height:100%;display:none;background:rgba(0,0,0,.8);justify-content:center;align-items:center}
-.modal-box{background:#121821;padding:25px;border-radius:20px;width:95%;max-width:800px;box-shadow:0 0 60px rgba(0,224,194,.3)}
-.modal-header{display:flex;justify-content:space-between;align-items:center}
-.modal-header h2{color:#00e0c2}
-.close{cursor:pointer;font-size:22px}
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:15px}
-.stat{background:#1c2633;padding:15px;border-radius:12px;text-align:center}
-.stat small{color:#8fa3b0}
-.stat h3{color:#00e0c2;margin:5px 0}
-.detalle{margin-top:15px;max-height:220px;overflow:auto}
-.detalle div{background:#1c2633;padding:10px;border-radius:10px;margin-bottom:8px;font-size:13px}
-
-/* FOOTER */
-footer{
-text-align:center;
-padding:15px;
-margin-top:30px;
-font-size:13px;
-color:#8fa3b0;
-border-top:1px solid #1c2633;
-}
-
-/* FLOAT */
-.floating-box{
-position:fixed;
-bottom:20px;
-right:20px;
-background:#121821;
-padding:15px;
-border-radius:15px;
-box-shadow:0 0 20px rgba(0,224,194,.3);
-width:180px;
-z-index:999;
-}
-.floating-box h4{margin:0 0 10px 0;font-size:13px;color:#00e0c2;}
-.floating-box button{width:100%;margin-bottom:6px;background:#00e0c2;color:black;}
+.modal-box{background:#121821;padding:25px;border-radius:20px;width:90%;max-width:600px}
 </style>
 </head>
 
@@ -66,202 +27,82 @@ z-index:999;
 <h1>🚚 Axis MC Logística</h1>
 
 <div class="card">
-<label>Nombre del Cliente</label>
-<input id="cliente">
-</div>
+<input id="inicio" placeholder="Punto de inicio">
+<input id="destino" placeholder="Destino">
+<input id="peso" placeholder="Peso kg">
 
-<div class="card">
-<label>Inicio</label>
-<input id="inicio">
-</div>
-
-<div class="card grid">
-<div>
-<label>Vehículo</label>
-<select id="vehiculo">
-<option value="auto">Auto</option>
-<option value="pickup">Pickup / Camión</option>
-</select>
-</div>
-<div>
-<label>Peso (kg)</label>
-<input id="peso">
-</div>
-</div>
-
-<div class="card">
-<div class="grid">
-<div>
-<label>Provincia</label>
-<select id="provincia" onchange="loadCantones()"></select>
-</div>
-<div>
-<label>Cantón</label>
-<select id="canton"></select>
-</div>
-<div>
-<label>Dirección</label>
-<input id="direccion">
-</div>
-</div>
-<button class="btn" onclick="agregar()">Agregar</button>
-</div>
-
-<div class="card">
-<div id="lista"></div>
 <button class="btn" onclick="calcular()">Calcular</button>
-<button class="btn" onclick="generarPDF()">PDF</button>
-<button class="btn" onclick="resetear()" style="background:#ff4d4d;color:white">Reiniciar</button>
 </div>
 </div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-box">
-<div class="modal-header">
-<h2>Cotización</h2>
-<span class="close" onclick="modal.style.display='none'">✖</span>
+<h2>Resultado</h2>
+<p id="km"></p>
+<p id="total"></p>
+<button onclick="modal.style.display='none'">Cerrar</button>
 </div>
-
-<div class="stats">
-<div class="stat"><small>Distancia</small><h3 id="km"></h3></div>
-<div class="stat"><small>Total</small><h3 id="total"></h3></div>
-</div>
-
-<div class="detalle" id="detalle"></div>
-</div>
-</div>
-
-<footer> © 2026 Axis MC Logística | Costa Rica </footer>
-
-<div class="floating-box">
-<h4>Enviar Cotizacion:</h4>
-<button onclick="enviarWhatsApp()">WhatsApp</button>
 </div>
 
 <script>
 
-// ================= DATOS =================
-const cantonesCR={
-"San José":["Central","Escazú","Desamparados"],
-"Alajuela":["Central","San Ramón","Grecia"],
-"Heredia":["Heredia","Barva","Santo Domingo"]
-};
-
-let direcciones=[];
-let dataFinal=null;
-
-// ================= INIT =================
-function init(){
-provincia.innerHTML='<option>Seleccione</option>';
-Object.keys(cantonesCR).forEach(p=>provincia.innerHTML+=`<option>${p}</option>`);
-}
-
-function loadCantones(){
-let p=provincia.value;
-canton.innerHTML='';
-(cantonesCR[p]||[]).forEach(c=>canton.innerHTML+=`<option>${c}</option>`);
-}
-
 new google.maps.places.Autocomplete(inicio,{componentRestrictions:{country:"cr"}});
-new google.maps.places.Autocomplete(direccion,{componentRestrictions:{country:"cr"}});
+new google.maps.places.Autocomplete(destino,{componentRestrictions:{country:"cr"}});
 
-// ================= LISTA =================
-function agregar(){
-if(!provincia.value || !canton.value || !direccion.value){
-return alert("Completa datos");
-}
-let dir=`${provincia.value}, ${canton.value}, ${direccion.value}`;
-direcciones.push(dir);
-renderLista();
-direccion.value="";
-}
+// 🔥 PRECIO POR KM SEGÚN DISTANCIA
+function precioPorKM(dist){
 
-function renderLista(){
-lista.innerHTML=direcciones.map((d,i)=>`
-<div class='item'>
-${i+1}. ${d}
-<button onclick="eliminar(${i})" style="float:right;background:#ff4d4d;color:white;border:none;border-radius:6px;padding:3px 8px;">X</button>
-</div>
-`).join('');
+if(dist <= 25) return 12500;
+else if(dist <= 50) return 10500;
+else if(dist <= 75) return 9500;
+else return 8500;
+
 }
 
-function eliminar(i){
-direcciones.splice(i,1);
-renderLista();
+// 🔥 MULTIPLICADOR POR PESO
+function factorPeso(peso){
+
+if(peso <= 200) return 1;
+else if(peso <= 500) return 1.15;
+else if(peso <= 1000) return 1.30;
+else return 1.5;
+
 }
 
-// ================= TARIFA =================
-function tarifaKM(){
-
-let vehiculo=document.getElementById("vehiculo").value;
-let pesoVal=parseFloat(peso.value)||0;
-
-let base=(vehiculo==="auto")?800:1600;
-let costoPeso=0;
-
-if(vehiculo==="pickup"){
-if(pesoVal<=200) costoPeso=pesoVal*10;
-else if(pesoVal<=500) costoPeso=pesoVal*8;
-else if(pesoVal<=1000) costoPeso=pesoVal*7;
-else costoPeso=pesoVal*6;
-}
-
-return base+(costoPeso/100);
-}
-
-// ================= CALCULAR =================
 async function calcular(){
 
-if(!inicio.value) return alert("Inicio requerido");
-if(direcciones.length===0) return alert("Agrega destinos");
+if(!inicio.value || !destino.value){
+return alert("Completa direcciones");
+}
 
-let puntos=[inicio.value,...direcciones];
 let service=new google.maps.DistanceMatrixService();
-let totalKM=0;
 
-for(let i=0;i<puntos.length-1;i++){
 let res=await new Promise(r=>{
 service.getDistanceMatrix({
-origins:[puntos[i]],
-destinations:[puntos[i+1]],
+origins:[inicio.value],
+destinations:[destino.value],
 travelMode:'DRIVING'
 },d=>r(d));
 });
-totalKM+=res.rows[0].elements[0].distance.value/1000;
-}
 
-let tkm=tarifaKM();
-let totalFinal=totalKM*tkm;
+let kmVal=res.rows[0].elements[0].distance.value/1000;
 
+let precioKM=precioPorKM(kmVal);
 let pesoVal=parseFloat(peso.value)||0;
-let vehiculo=document.getElementById("vehiculo").value;
+let factor=factorPeso(pesoVal);
 
-// 🔥 MÍNIMOS RENTABLES
-if(vehiculo==="auto" && totalFinal<12000) totalFinal=12000;
-if(vehiculo==="pickup" && totalFinal<30000) totalFinal=30000;
-if(vehiculo==="pickup" && pesoVal>1000 && totalFinal<60000) totalFinal=60000;
-if(vehiculo==="pickup" && pesoVal>2000 && totalFinal<70000) totalFinal=70000;
+// 🔥 TOTAL FINAL
+let total=kmVal * precioKM * factor;
 
-km.innerText=totalKM.toFixed(2)+" km";
-total.innerText="₡ "+totalFinal.toFixed(0);
+// 🔥 MÍNIMO INTELIGENTE
+if(total < 15000) total = 15000;
 
-dataFinal={totalKM,totalFinal,puntos};
+km.innerText="Distancia: "+kmVal.toFixed(2)+" km";
+total.innerText="Total: ₡ "+Math.round(total);
+
 modal.style.display='flex';
-}
 
-// ================= OTROS =================
-function resetear(){
-direcciones=[];lista.innerHTML="";inicio.value="";peso.value="";cliente.value="";
 }
-
-function enviarWhatsApp(){
-if(!dataFinal) return alert("Calcula primero");
-let texto=`Cotización: ₡ ${dataFinal.totalFinal}`;
-window.open(`https://wa.me/50672494690?text=${texto}`);
-}
-
-init();
 
 </script>
 

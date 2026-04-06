@@ -223,7 +223,7 @@ function tarifaKM(){
 
   // 🔥 Definir base según vehículo
   if(vehiculo === "auto"){
-    base = 650;
+    base = 700;
   } else if(vehiculo === "pickup"){
     base = 1480; // podés ajustar (2500–3500 recomendado)
   }
@@ -234,9 +234,9 @@ function tarifaKM(){
   // 🔥 SOLO aplicar extra si es pickup/camión
   if(vehiculo === "pickup"){
     if(pesoVal > 0 && pesoVal <= 200) extra = 1620;
-    else if(pesoVal > 200 && pesoVal <= 500) extra = 1620;
-    else if(pesoVal > 500 && pesoVal <= 1000) extra = 1620;
-    else if(pesoVal > 1000) extra = 1620;
+    else if(pesoVal > 200 && pesoVal <= 500) extra = 1320;
+    else if(pesoVal > 500 && pesoVal <= 1000) extra = 1220;
+    else if(pesoVal > 1000) extra = 1120;
   }
 
   return base + extra;

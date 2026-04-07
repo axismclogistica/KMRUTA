@@ -187,8 +187,10 @@ provincia.value="Seleccione";canton.innerHTML="";
 modal.style.display='none';
 }
 
-// 🔥 NUEVO CALCULO
-function tarifaKM(totalKM){
+// 🔥 NUEVA FUNCIÓN
+function tarifaKM(totalKM, vehiculo){
+if(vehiculo === "auto") return 650;
+
 if(totalKM <= 11) return 11500;
 else if(totalKM <= 25) return 5000;
 else if(totalKM <= 50) return 6000;
@@ -199,6 +201,8 @@ async function calcular(){
 
 if(!inicio.value) return alert("Falta punto de inicio");
 if(direcciones.length===0) return alert("Agregá al menos un destino");
+
+let vehiculo = document.getElementById("vehiculo").value;
 
 let puntos=[inicio.value,...direcciones];
 let service=new google.maps.DistanceMatrixService();
@@ -218,17 +222,19 @@ totalKM+=kmVal;
 detalleHTML+=`<div>Tramo ${i+1}: ${kmVal.toFixed(2)} km</div>`;
 }
 
-let tkm=tarifaKM(totalKM);
-let totalFinal=totalKM*tkm;
+let tkm = tarifaKM(totalKM, vehiculo);
+let totalFinal = totalKM * tkm;
 
-// 🔥 PESO
+if(vehiculo === "pickup"){
 let pesoVal=parseFloat(peso.value)||0;
 let factor=1;
+
 if(pesoVal>200 && pesoVal<=500) factor=1.90;
 else if(pesoVal>500 && pesoVal<=1000) factor=1.70;
 else if(pesoVal>1000) factor=1.50;
 
 totalFinal*=factor;
+}
 
 km.innerText=totalKM.toFixed(2)+" km";
 total.innerText="₡ "+totalFinal.toFixed(0);

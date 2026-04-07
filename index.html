@@ -189,10 +189,10 @@ modal.style.display='none';
 
 // 🔥 NUEVO CALCULO
 function tarifaKM(totalKM){
-if(totalKM <= 25) return 14500;
-else if(totalKM <= 50) return 12500;
-else if(totalKM <= 75) return 10500;
-else return 9500;
+if(totalKM <= 25) return 11500;
+else if(totalKM <= 50) return 10500;
+else if(totalKM <= 75) return 9500;
+else return 8000;
 }
 
 async function calcular(){
@@ -224,9 +224,9 @@ let totalFinal=totalKM*tkm;
 // 🔥 PESO
 let pesoVal=parseFloat(peso.value)||0;
 let factor=1;
-if(pesoVal>200 && pesoVal<=500) factor=1.15;
-else if(pesoVal>500 && pesoVal<=1000) factor=1.30;
-else if(pesoVal>1000) factor=1.50;
+if(pesoVal>200 && pesoVal<=500) factor=0.30;
+else if(pesoVal>500 && pesoVal<=1000) factor=0.20;
+else if(pesoVal>1000) factor=0.15;
 
 totalFinal*=factor;
 

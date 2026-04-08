@@ -187,14 +187,16 @@ provincia.value="Seleccione";canton.innerHTML="";
 modal.style.display='none';
 }
 
-// 🔥 NUEVA FUNCIÓN
+// 🔥 NUEVA TARIFA (LO ÚNICO CAMBIADO)
 function tarifaKM(totalKM, vehiculo){
+
 if(vehiculo === "auto") return 650;
 
-if(totalKM <= 11) return 11500;
-else if(totalKM <= 25) return 5000;
-else if(totalKM <= 50) return 6000;
+if(totalKM <= 15) return 3500;
+else if(totalKM <= 50) return 3250;
+else if(totalKM <= 100) return 3100;
 else return 3000;
+
 }
 
 async function calcular(){
@@ -225,13 +227,19 @@ detalleHTML+=`<div>Tramo ${i+1}: ${kmVal.toFixed(2)} km</div>`;
 let tkm = tarifaKM(totalKM, vehiculo);
 let totalFinal = totalKM * tkm;
 
+// 🔥 GANANCIA SOLO TRAMOS CORTOS
+if(vehiculo === "pickup" && totalKM <= 15){
+  totalFinal *= 1.84;
+}
+
+// 🔥 PESO SOLO PICKUP
 if(vehiculo === "pickup"){
 let pesoVal=parseFloat(peso.value)||0;
 let factor=1;
 
-if(pesoVal>200 && pesoVal<=500) factor=1.90;
-else if(pesoVal>500 && pesoVal<=1000) factor=1.70;
-else if(pesoVal>1000) factor=1.50;
+if(pesoVal>200 && pesoVal<=500) factor=0;
+else if(pesoVal>500 && pesoVal<=1000) factor=0;
+else if(pesoVal>1000) factor=0;
 
 totalFinal*=factor;
 }

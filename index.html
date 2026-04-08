@@ -192,8 +192,8 @@ function tarifaKM(totalKM, vehiculo){
 if(vehiculo === "auto") return 650;
 
 if(totalKM <= 15) return 3500;
-else if(totalKM <= 50) return 3000;
-else if(totalKM <= 100) return 2800;
+else if(totalKM <= 50) return 3400;
+else if(totalKM <= 100) return 3100;
 else return 2600;
 
 }
@@ -227,7 +227,7 @@ let tkm = tarifaKM(totalKM, vehiculo);
 let totalFinal = totalKM * tkm;
 
 if(vehiculo === "pickup" && totalKM <= 15){
-  totalFinal *= 1.6;
+  totalFinal *= 1.3;
 }
 
 // 🔥 MINIMO

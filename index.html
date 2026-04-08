@@ -187,15 +187,14 @@ provincia.value="Seleccione";canton.innerHTML="";
 modal.style.display='none';
 }
 
-// 🔥 NUEVO CALCULO
 function tarifaKM(totalKM, vehiculo){
 
 if(vehiculo === "auto") return 650;
 
 if(totalKM <= 15) return 3500;
-else if(totalKM <= 50) return 3250;
-else if(totalKM <= 100) return 3100;
-else return 3000;
+else if(totalKM <= 50) return 3000;
+else if(totalKM <= 100) return 2800;
+else return 2600;
 
 }
 
@@ -227,12 +226,11 @@ detalleHTML+=`<div>Tramo ${i+1}: ${kmVal.toFixed(2)} km</div>`;
 let tkm = tarifaKM(totalKM, vehiculo);
 let totalFinal = totalKM * tkm;
 
-// 🔥 GANANCIA SOLO TRAMOS CORTOS
 if(vehiculo === "pickup" && totalKM <= 15){
-  totalFinal *= 1.84;
+  totalFinal *= 1.6;
 }
 
-// 🔥 MINIMO DE COBRO
+// 🔥 MINIMO
 if(totalFinal < 35000){
   totalFinal = 45000;
 }
